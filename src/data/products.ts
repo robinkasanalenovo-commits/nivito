@@ -1,0 +1,38 @@
+export const products = [
+  {
+    id: 1,
+    name: "Tomato",
+    category: "vegetables",
+    price: 35,
+    oldPrice: 50,
+    image: "/products/tomato.png",
+    unit: "1kg",
+  },
+  {
+    id: 2,
+    name: "Potato",
+    category: "vegetables",
+    price: 25,
+    oldPrice: 40,
+    image: "/products/potato.png",
+    unit: "1kg",
+  },
+  {
+    id: 3,
+    name: "Apple",
+    category: "fruits",
+    price: 80,
+    oldPrice: 120,
+    image: "/products/apple.png",
+    unit: "1kg",
+  },
+  {
+    id: 4,
+    name: "Milk",
+    category: "dairy",
+    price: 30,
+    oldPrice: 40,
+    image: "/products/milk.png",
+    unit: "500ml",
+  },
+];

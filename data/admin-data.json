@@ -1,0 +1,793 @@
+{
+  "banners": [
+    {
+      "id": 1777476542856,
+      "title": "VEGS",
+      "image": "https://i.postimg.cc/9QPp3KdM/image-(1).jpg",
+      "link": "http://localhost:3000/category/vegetable",
+      "active": true
+    }
+  ],
+  "categories": [
+    {
+      "id": 1777484694938,
+      "name": "Vegetables",
+      "image": "https://i.pinimg.com/474x/fd/9a/79/fd9a7920bf1698a31d362c336e7e32a9.jpg",
+      "link": "/category/vegetables",
+      "active": true,
+      "order": 1
+    },
+    {
+      "id": 1777486507553,
+      "name": "Fruits",
+      "image": "https://png.pngtree.com/png-clipart/20241109/original/pngtree-beautiful-various-fruits-item-and-healthy-clipart-png-image_16788969.png",
+      "link": "/category/fruits",
+      "active": true,
+      "order": 2
+    },
+    {
+      "id": 1777486763700,
+      "name": "Dairy products",
+      "image": "https://png.pngtree.com/png-clipart/20240506/original/pngtree-dairy-products-store-composition-png-image_15017068.png",
+      "link": "/category/dairy-products",
+      "active": true,
+      "order": 3
+    },
+    {
+      "id": 1777487149826,
+      "name": "Grocery",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdSTybltNYGkG3inpWZHQhasyWbZJ4LaylfA&s",
+      "link": "/category/grocery",
+      "active": true,
+      "order": 5
+    }
+  ],
+  "products": [
+    {
+      "id": 1777496829387,
+      "name": "WATER MELON/TARBOOJ",
+      "image": "https://m.media-amazon.com/images/I/31hxlT+++EL._AC_UF1000,1000_QL80_.jpg",
+      "category": "Fruits",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777496829387,
+          "weight": "2kg",
+          "sellingPrice": 50,
+          "stock": 20,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777496743375,
+      "name": " Banana",
+      "image": "https://www.dole.com/sites/default/files/media/2025-01/banana-cavendish_0.png",
+      "category": "Fruits",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777496743375,
+          "weight": "4pc",
+          "sellingPrice": 28,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777496532935,
+      "name": "Coconut / Nariyal Pani",
+      "image": "https://img.clevup.in/252374/SKU-0315_1-1753671227646.jpg?width=600&format=webp",
+      "category": "Fruits",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777496532935,
+          "weight": "1pc",
+          "sellingPrice": 79,
+          "stock": 20,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777494312708,
+      "name": "Apple",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQO4kCGI3LxA44tsZHxiU6Dw-ZgFOezD7-QDA&s",
+      "category": "Fruits",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777494312708,
+          "weight": "500g",
+          "sellingPrice": 100,
+          "stock": 2,
+          "active": true
+        },
+        {
+          "id": 1777494312709,
+          "weight": "1kg",
+          "sellingPrice": 199,
+          "stock": 2,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777494182351,
+      "name": "Arbi",
+      "image": "https://5.imimg.com/data5/SELLER/Default/2021/9/NG/WT/FQ/22640664/taro-arbi-250x250.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777494182351,
+          "weight": "500g",
+          "sellingPrice": 30,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777494182352,
+          "weight": "1kg",
+          "sellingPrice": 60,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777494087596,
+      "name": "Cucumber (Kheera)",
+      "image": "https://i1.zopping.com/zopsmart-media/25343/images/originals/20250604/eea285e2-f56b-4f76-9fb4-e255d507bf8b-cucumberhybrid.webp",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777494087596,
+          "weight": "500g",
+          "sellingPrice": 13,
+          "stock": 20,
+          "active": true
+        },
+        {
+          "id": 1777494087597,
+          "weight": "1kg",
+          "sellingPrice": 25,
+          "stock": 20,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777493958590,
+      "name": "Aadrak",
+      "image": "https://dukaan.b-cdn.net/700x700/webp/projecteagle/images/a093a311-bfbd-4df3-b2d9-f37cc4154c2c.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777493958590,
+          "weight": "250g",
+          "sellingPrice": 25,
+          "stock": 20,
+          "active": true
+        },
+        {
+          "id": 1777493958591,
+          "weight": "500g",
+          "sellingPrice": 50,
+          "stock": 20,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777493831442,
+      "name": "Lemon",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7ID15mpFruiVCgqINMNVATsXfoAyLPwK7zA&s",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777493831442,
+          "weight": "100g",
+          "sellingPrice": 30,
+          "stock": 20,
+          "active": true
+        },
+        {
+          "id": 1777493831443,
+          "weight": "250g",
+          "sellingPrice": 60,
+          "stock": 20,
+          "active": true
+        },
+        {
+          "id": 1777493831444,
+          "weight": "500g",
+          "sellingPrice": 120,
+          "stock": 20,
+          "active": true
+        },
+        {
+          "id": 1777493831445,
+          "weight": "1kg",
+          "sellingPrice": 240,
+          "stock": 20,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777492029588,
+      "name": "Shimla Mirch (Capsicum)",
+      "image": "https://fpsstore.in/cdn/shop/products/Capsicum-750x750_1.jpg?v=1642416876",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777492029588,
+          "weight": "500g",
+          "sellingPrice": 15,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777492029589,
+          "weight": "1kg",
+          "sellingPrice": 29,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777491901133,
+      "name": "Green chilli",
+      "image": "https://dookan.com/cdn/shop/files/Dookan_Green_Chilli_Hari_Mirch_250g_bd25ee16-5b44-4ce9-82ab-5f784ac140f2.png?v=1755865706&width=1445",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777491901133,
+          "weight": "100g",
+          "sellingPrice": 10,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777491901134,
+          "weight": "250g",
+          "sellingPrice": 25,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777491901135,
+          "weight": "500g",
+          "sellingPrice": 50,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777491839027,
+      "name": "Dhaniya Coriander",
+      "image": "https://m.media-amazon.com/images/I/51ceN4AcpNS.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777491839027,
+          "weight": "100g",
+          "sellingPrice": 10,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777491839028,
+          "weight": "250g",
+          "sellingPrice": 25,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777491689846,
+      "name": "Podina",
+      "image": "https://images.jdmagicbox.com/quickquotes/images_main/mint-leaves-podina-2018620995-8cjb63gz.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777491689846,
+          "weight": "100g",
+          "sellingPrice": 12,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777491689847,
+          "weight": "250g",
+          "sellingPrice": 30,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777490523241,
+      "name": "Bottle Gourd / Lauki",
+      "image": "https://dookan.com/cdn/shop/files/1bt40V-27gt8TFwaTnl35RW-G7j3To3Xo.png?v=1755882164&width=1445",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777490523241,
+          "weight": "500g",
+          "sellingPrice": 13,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777490523242,
+          "weight": "1kg",
+          "sellingPrice": 25,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777490161763,
+      "name": "Kashifal / Pumpkin / Kaddu",
+      "image": "https://img.cdnx.in/358917/Pumpkin-1713937924358.jpeg?width=600&format=webp",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777655198480,
+          "weight": "1kg",
+          "sellingPrice": 20,
+          "stock": 100,
+          "active": true
+        },
+        {
+          "id": 1777655273835,
+          "weight": "1kg",
+          "sellingPrice": 20,
+          "stock": 100,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777489872080,
+      "name": "Tomato",
+      "image": "https://monasterybakery.com/wp-content/uploads/2020/11/Single-Tomato_46982675_xl.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777489872080,
+          "weight": "1kg",
+          "sellingPrice": 29,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777489872081,
+          "weight": "2kg",
+          "sellingPrice": 58,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777489656856,
+      "name": "Onion",
+      "image": "https://mart.lexzer.com/wp-content/uploads/2020/04/onion.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777655130509,
+          "weight": "1kg",
+          "sellingPrice": 25,
+          "stock": 100,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777489546716,
+      "name": "Chipsona potato",
+      "image": "https://d10i8ghbmk7qrh.cloudfront.net/images/product/6905dfa908f341761992617.webp",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777655310509,
+          "weight": "1kg",
+          "sellingPrice": 20,
+          "stock": 100,
+          "active": true
+        }
+      ]
+    },
+    {
+      "id": 1777489038529,
+      "name": "Potato",
+      "image": "https://m.media-amazon.com/images/I/41QKCkQ2A5L.jpg",
+      "category": "Vegetables",
+      "active": true,
+      "variants": [
+        {
+          "id": 1777489038529,
+          "weight": "2kg",
+          "sellingPrice": 24,
+          "stock": 50,
+          "active": true
+        },
+        {
+          "id": 1777489038530,
+          "weight": "5kg",
+          "sellingPrice": 60,
+          "stock": 50,
+          "active": true
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": 1777784582510,
+      "orderId": "NIV-1777784582510",
+      "customerName": "Customer",
+      "customerMobile": "9873513566",
+      "address": "Sector 56, Noida - 201301",
+      "items": [
+        {
+          "id": 1777494087596087600,
+          "name": "Cucumber (Kheera) - 500g",
+          "image": "https://i1.zopping.com/zopsmart-media/25343/images/originals/20250604/eea285e2-f56b-4f76-9fb4-e255d507bf8b-cucumberhybrid.webp",
+          "price": 13,
+          "quantity": 4,
+          "total": 52
+        },
+        {
+          "id": 1777493958590958600,
+          "name": "Aadrak - 250g",
+          "image": "https://dukaan.b-cdn.net/700x700/webp/projecteagle/images/a093a311-bfbd-4df3-b2d9-f37cc4154c2c.jpg",
+          "price": 25,
+          "quantity": 1,
+          "total": 25
+        },
+        {
+          "id": 1777493831442831400,
+          "name": "Lemon - 100g",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7ID15mpFruiVCgqINMNVATsXfoAyLPwK7zA&s",
+          "price": 30,
+          "quantity": 1,
+          "total": 30
+        },
+        {
+          "id": 1777496829387829500,
+          "name": "WATER MELON/TARBOOJ - 2kg",
+          "image": "https://m.media-amazon.com/images/I/31hxlT+++EL._AC_UF1000,1000_QL80_.jpg",
+          "price": 50,
+          "quantity": 1,
+          "total": 50
+        },
+        {
+          "id": 1777496743375743500,
+          "name": " Banana - 4pc",
+          "image": "https://www.dole.com/sites/default/files/media/2025-01/banana-cavendish_0.png",
+          "price": 28,
+          "quantity": 1,
+          "total": 28
+        },
+        {
+          "id": 1777496532935533000,
+          "name": "Coconut / Nariyal Pani - 1pc",
+          "image": "https://img.clevup.in/252374/SKU-0315_1-1753671227646.jpg?width=600&format=webp",
+          "price": 79,
+          "quantity": 1,
+          "total": 79
+        }
+      ],
+      "itemTotal": 264,
+      "couponCode": null,
+      "couponDiscount": 0,
+      "deliveryFee": 0,
+      "handlingFee": 4,
+      "tip": 0,
+      "grandTotal": 268,
+      "notes": "",
+      "paymentStatus": "Pending",
+      "orderStatus": "Placed",
+      "createdAt": "2026-05-03T05:03:02.510Z"
+    },
+    {
+      "id": 1777780504695,
+      "orderId": "NIV-1777780504695",
+      "customerName": "Customer",
+      "customerMobile": "",
+      "address": "Sector 56, Noida - 201301",
+      "items": [
+        {
+          "id": 1777494182351182300,
+          "name": "Arbi - 500g",
+          "image": "https://5.imimg.com/data5/SELLER/Default/2021/9/NG/WT/FQ/22640664/taro-arbi-250x250.jpg",
+          "price": 30,
+          "quantity": 1,
+          "total": 30
+        },
+        {
+          "id": 1777494087596087600,
+          "name": "Cucumber (Kheera) - 500g",
+          "image": "https://i1.zopping.com/zopsmart-media/25343/images/originals/20250604/eea285e2-f56b-4f76-9fb4-e255d507bf8b-cucumberhybrid.webp",
+          "price": 13,
+          "quantity": 1,
+          "total": 13
+        },
+        {
+          "id": 1777493958590958600,
+          "name": "Aadrak - 250g",
+          "image": "https://dukaan.b-cdn.net/700x700/webp/projecteagle/images/a093a311-bfbd-4df3-b2d9-f37cc4154c2c.jpg",
+          "price": 25,
+          "quantity": 1,
+          "total": 25
+        },
+        {
+          "id": 1777493831442831400,
+          "name": "Lemon - 100g",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7ID15mpFruiVCgqINMNVATsXfoAyLPwK7zA&s",
+          "price": 30,
+          "quantity": 1,
+          "total": 30
+        },
+        {
+          "id": 1777492029588029700,
+          "name": "Shimla Mirch (Capsicum) - 500g",
+          "image": "https://fpsstore.in/cdn/shop/products/Capsicum-750x750_1.jpg?v=1642416876",
+          "price": 15,
+          "quantity": 1,
+          "total": 15
+        },
+        {
+          "id": 1777491901133901000,
+          "name": "Green chilli - 100g",
+          "image": "https://dookan.com/cdn/shop/files/Dookan_Green_Chilli_Hari_Mirch_250g_bd25ee16-5b44-4ce9-82ab-5f784ac140f2.png?v=1755865706&width=1445",
+          "price": 10,
+          "quantity": 1,
+          "total": 10
+        },
+        {
+          "id": 1777491839027839000,
+          "name": "Dhaniya Coriander - 100g",
+          "image": "https://m.media-amazon.com/images/I/51ceN4AcpNS.jpg",
+          "price": 10,
+          "quantity": 1,
+          "total": 10
+        },
+        {
+          "id": 1777491689846690000,
+          "name": "Podina - 100g",
+          "image": "https://images.jdmagicbox.com/quickquotes/images_main/mint-leaves-podina-2018620995-8cjb63gz.jpg",
+          "price": 12,
+          "quantity": 1,
+          "total": 12
+        }
+      ],
+      "itemTotal": 145,
+      "deliveryFee": 0,
+      "grandTotal": 145,
+      "paymentStatus": "Pending",
+      "orderStatus": "Placed",
+      "createdAt": "2026-05-03T03:55:04.695Z"
+    },
+    {
+      "id": 1777652746665,
+      "orderId": "NIV-1777652746665",
+      "customerName": "Customer",
+      "customerMobile": "",
+      "address": "Sector 56, Noida - 201301",
+      "items": [
+        {
+          "id": 1777494182351182300,
+          "name": "Arbi - 500g",
+          "image": "https://5.imimg.com/data5/SELLER/Default/2021/9/NG/WT/FQ/22640664/taro-arbi-250x250.jpg",
+          "price": 30,
+          "quantity": 3,
+          "total": 90
+        },
+        {
+          "id": 1777493831442831400,
+          "name": "Lemon - 100g",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7ID15mpFruiVCgqINMNVATsXfoAyLPwK7zA&s",
+          "price": 30,
+          "quantity": 2,
+          "total": 60
+        },
+        {
+          "id": 1777496829387829500,
+          "name": "WATER MELON/TARBOOJ - 2kg",
+          "image": "https://m.media-amazon.com/images/I/31hxlT+++EL._AC_UF1000,1000_QL80_.jpg",
+          "price": 50,
+          "quantity": 2,
+          "total": 100
+        },
+        {
+          "id": 1777496743375743500,
+          "name": " Banana - 4pc",
+          "image": "https://www.dole.com/sites/default/files/media/2025-01/banana-cavendish_0.png",
+          "price": 28,
+          "quantity": 2,
+          "total": 56
+        }
+      ],
+      "itemTotal": 306,
+      "deliveryFee": 0,
+      "grandTotal": 306,
+      "paymentStatus": "Pending",
+      "orderStatus": "Confirmed",
+      "createdAt": "2026-05-01T16:25:46.665Z"
+    },
+    {
+      "id": 1777611284915,
+      "orderId": "NIV-1777611284915",
+      "customerName": "Customer",
+      "customerMobile": "",
+      "address": "Sector 56, Noida - 201301",
+      "items": [
+        {
+          "id": 1777496829387829500,
+          "name": "WATER MELON/TARBOOJ - 2kg",
+          "image": "https://m.media-amazon.com/images/I/31hxlT+++EL._AC_UF1000,1000_QL80_.jpg",
+          "price": 50,
+          "quantity": 1,
+          "total": 50
+        },
+        {
+          "id": 1777496743375743500,
+          "name": " Banana - 4pc",
+          "image": "https://www.dole.com/sites/default/files/media/2025-01/banana-cavendish_0.png",
+          "price": 28,
+          "quantity": 1,
+          "total": 28
+        },
+        {
+          "id": 1777496532935533000,
+          "name": "Coconut / Nariyal Pani - 1pc",
+          "image": "https://img.clevup.in/252374/SKU-0315_1-1753671227646.jpg?width=600&format=webp",
+          "price": 79,
+          "quantity": 1,
+          "total": 79
+        },
+        {
+          "id": 1777494312708312800,
+          "name": "Apple - 500g",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQO4kCGI3LxA44tsZHxiU6Dw-ZgFOezD7-QDA&s",
+          "price": 100,
+          "quantity": 1,
+          "total": 100
+        }
+      ],
+      "itemTotal": 257,
+      "deliveryFee": 0,
+      "grandTotal": 257,
+      "paymentStatus": "Pending",
+      "orderStatus": "Confirmed",
+      "createdAt": "2026-05-01T04:54:44.915Z"
+    },
+    {
+      "id": 1777610828840,
+      "orderId": "NIV-1777610828840",
+      "customerName": "Customer",
+      "customerMobile": "",
+      "address": "Sector 56, Noida - 201301",
+      "items": [
+        {
+          "id": 1777496468549468400,
+          "name": "Coconut / Nariyal Pani - 1pc",
+          "image": "https://img.clevup.in/252374/SKU-0315_1-1753671227646.jpg?width=600&format=webp",
+          "price": 1,
+          "quantity": 3,
+          "total": 3
+        },
+        {
+          "id": 1777494087596087600,
+          "name": "Cucumber (Kheera) - 500g",
+          "image": "https://i1.zopping.com/zopsmart-media/25343/images/originals/20250604/eea285e2-f56b-4f76-9fb4-e255d507bf8b-cucumberhybrid.webp",
+          "price": 13,
+          "quantity": 1,
+          "total": 13
+        },
+        {
+          "id": 1777493958590958600,
+          "name": "Aadrak - 250g",
+          "image": "https://dukaan.b-cdn.net/700x700/webp/projecteagle/images/a093a311-bfbd-4df3-b2d9-f37cc4154c2c.jpg",
+          "price": 25,
+          "quantity": 1,
+          "total": 25
+        },
+        {
+          "id": 1777493831442831400,
+          "name": "Lemon - 100g",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7ID15mpFruiVCgqINMNVATsXfoAyLPwK7zA&s",
+          "price": 30,
+          "quantity": 1,
+          "total": 30
+        }
+      ],
+      "itemTotal": 71,
+      "deliveryFee": 0,
+      "grandTotal": 71,
+      "paymentStatus": "Pending",
+      "orderStatus": "Placed",
+      "createdAt": "2026-05-01T04:47:08.840Z"
+    },
+    {
+      "id": 1777498390892,
+      "orderId": "NIV-1777498390892",
+      "customerName": "Customer",
+      "customerMobile": "",
+      "address": "Sector 56, Noida - 201301",
+      "items": [
+        {
+          "id": 1777494182351182300,
+          "name": "Arbi - 500g",
+          "image": "https://5.imimg.com/data5/SELLER/Default/2021/9/NG/WT/FQ/22640664/taro-arbi-250x250.jpg",
+          "price": 30,
+          "quantity": 2,
+          "total": 60
+        },
+        {
+          "id": 1777494087596087600,
+          "name": "Cucumber (Kheera) - 500g",
+          "image": "https://i1.zopping.com/zopsmart-media/25343/images/originals/20250604/eea285e2-f56b-4f76-9fb4-e255d507bf8b-cucumberhybrid.webp",
+          "price": 13,
+          "quantity": 2,
+          "total": 26
+        },
+        {
+          "id": 1777493958590958600,
+          "name": "Aadrak - 250g",
+          "image": "https://dukaan.b-cdn.net/700x700/webp/projecteagle/images/a093a311-bfbd-4df3-b2d9-f37cc4154c2c.jpg",
+          "price": 25,
+          "quantity": 2,
+          "total": 50
+        },
+        {
+          "id": 1777493831442831400,
+          "name": "Lemon - 100g",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7ID15mpFruiVCgqINMNVATsXfoAyLPwK7zA&s",
+          "price": 30,
+          "quantity": 2,
+          "total": 60
+        }
+      ],
+      "itemTotal": 196,
+      "deliveryFee": 0,
+      "grandTotal": 196,
+      "paymentStatus": "Pending",
+      "orderStatus": "Placed",
+      "createdAt": "2026-04-29T21:33:10.892Z"
+    }
+  ],
+  "customers": [],
+  "referrals": [],
+  "notificationSettings": {
+    "title": "loot",
+    "message": "bha hahsbh sj",
+    "active": true,
+    "showPopup": true,
+    "updatedAt": 1777410014633
+  }
+}
