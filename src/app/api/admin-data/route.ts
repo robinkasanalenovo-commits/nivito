@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
-
-const dataDir = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDir, "admin-data.json");
+export const dynamic = "force-dynamic";
 
 const defaultNotificationSettings = {
   title: "",
@@ -15,69 +12,123 @@ const defaultNotificationSettings = {
   updatedAt: 0,
 };
 
+const defaultData = {
+  banners: [],
+  categories: [],
+  products: [],
+  orders: [],
+  customers: [],
+  referrals: [],
+  notificationSettings: defaultNotificationSettings,
+};
+
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+function normalizeData(data: any) {
+  return {
+    banners: data?.banners || [],
+    categories: data?.categories || [],
+    products: data?.products || [],
+    orders: data?.orders || [],
+    customers: data?.customers || [],
+    referrals: data?.referrals || [],
+    notificationSettings:
+      data?.notificationSettings || defaultNotificationSettings,
+  };
+}
+
 async function getData() {
-  try {
-    await fs.mkdir(dataDir, { recursive: true });
-    const file = await fs.readFile(dataFile, "utf-8");
-    const parsed = JSON.parse(file);
+  const supabase = getSupabase();
 
-    return {
-      banners: parsed.banners || [],
-      categories: parsed.categories || [],
-      products: parsed.products || [],
-      orders: parsed.orders || [],
-      customers: parsed.customers || [],
-      referrals: parsed.referrals || [],
-      notificationSettings:
-        parsed.notificationSettings || defaultNotificationSettings,
-    };
-  } catch {
-    const defaultData = {
-      banners: [],
-      categories: [],
-      products: [],
-      orders: [],
-      customers: [],
-      referrals: [],
-      notificationSettings: defaultNotificationSettings,
-    };
+  const { data, error } = await supabase
+    .from("admin_data")
+    .select("data")
+    .eq("id", 1)
+    .single();
 
-    await fs.writeFile(dataFile, JSON.stringify(defaultData, null, 2));
+  if (error || !data) {
+    await supabase.from("admin_data").upsert({
+      id: 1,
+      data: defaultData,
+      updated_at: new Date().toISOString(),
+    });
+
     return defaultData;
+  }
+
+  return normalizeData(data.data);
+}
+
+async function saveData(newData: any) {
+  const supabase = getSupabase();
+
+  const { error } = await supabase.from("admin_data").upsert({
+    id: 1,
+    data: normalizeData(newData),
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    throw error;
   }
 }
 
-async function saveData(data: any) {
-  await fs.mkdir(dataDir, { recursive: true });
-  await fs.writeFile(dataFile, JSON.stringify(data, null, 2));
-}
-
 export async function GET() {
-  const data = await getData();
-  return NextResponse.json(data);
+  try {
+    const data = await getData();
+
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error?.message || "Failed to load data",
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const oldData = await getData();
+  try {
+    const body = await req.json();
+    const oldData = await getData();
 
-  const data = {
-    banners: body.banners ?? oldData.banners,
-    categories: body.categories ?? oldData.categories,
-    products: body.products ?? oldData.products,
-    orders: body.orders ?? oldData.orders,
-    customers: body.customers ?? oldData.customers,
-    referrals: body.referrals ?? oldData.referrals,
-    notificationSettings:
-      body.notificationSettings ??
-      oldData.notificationSettings ??
-      defaultNotificationSettings,
-  };
+    const data = {
+      banners: body.banners ?? oldData.banners,
+      categories: body.categories ?? oldData.categories,
+      products: body.products ?? oldData.products,
+      orders: body.orders ?? oldData.orders,
+      customers: body.customers ?? oldData.customers,
+      referrals: body.referrals ?? oldData.referrals,
+      notificationSettings:
+        body.notificationSettings ??
+        oldData.notificationSettings ??
+        defaultNotificationSettings,
+    };
 
-  await saveData(data);
+    await saveData(data);
 
-  return NextResponse.json({
-    success: true,
-    data,
-  });
+    return NextResponse.json({
+      success: true,
+      data,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error?.message || "Failed to save data",
+      },
+      { status: 500 }
+    );
+  }
 }
