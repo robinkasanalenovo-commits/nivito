@@ -538,9 +538,9 @@ export default function HomePage() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280" }}>Need help?</div>
-            <a href="tel:9999878381" style={{
+            <a href="tel:9873513566" style={{
               fontSize: 13, fontWeight: 900, color: "#047857", textDecoration: "none",
-            }}>📞 9999878381</a>
+            }}>📞 9873513566</a>
           </div>
         </div>
       </div>
@@ -820,7 +820,7 @@ function BottomNav({ cartCount, active }: { cartCount: number; active: string })
   const items = [
     { key: "home", label: "Home", icon: HomeIcon, href: "/" },
     { key: "categories", label: "Categories", icon: Grid3x3, href: "/category/all" },
-    { key: "cart", label: "Cart", icon: ShoppingCart, href: "/cart", badge: cartCount },
+   { key: "cart", label: "Cart", icon: ShoppingCart, href: "/cart", badge: cartCount > 0 ? cartCount : undefined },
     { key: "profile", label: "Profile", icon: User, href: "/profile" },
   ];
   return (
@@ -856,7 +856,7 @@ function BottomNav({ cartCount, active }: { cartCount: number; active: string })
               )}
               <div style={{ position: "relative" }}>
                 <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
-                {it.badge && it.badge > 0 && (
+              {it.key === "cart" && Number(it.badge) > 0 && (
                   <span style={{
                     position: "absolute", top: -5, right: -7,
                     minWidth: 15, height: 15, padding: "0 3px",
