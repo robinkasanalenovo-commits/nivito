@@ -12,9 +12,16 @@ const defaultNotificationSettings = {
   updatedAt: 0,
 };
 
+const defaultCategories = [
+  { id: 1, name: "Vegetables", image: "", link: "/category/vegetables", active: true, order: 1 },
+  { id: 2, name: "Fruits", image: "", link: "/category/fruits", active: true, order: 2 },
+  { id: 3, name: "Dairy", image: "", link: "/category/dairy", active: true, order: 3 },
+  { id: 4, name: "Grocery", image: "", link: "/category/grocery", active: true, order: 4 },
+];
+
 const defaultData = {
   banners: [],
-  categories: [],
+  categories: defaultCategories,
   products: [],
   orders: [],
   customers: [],
@@ -25,14 +32,16 @@ const defaultData = {
 function getSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
   return createClient(supabaseUrl, supabaseKey);
 }
 
 function normalizeData(data: any) {
   return {
     banners: data?.banners || [],
-    categories: data?.categories || [],
+    categories:
+      Array.isArray(data?.categories) && data.categories.length > 0
+        ? data.categories
+        : defaultCategories,
     products: data?.products || [],
     orders: data?.orders || [],
     customers: data?.customers || [],
@@ -61,7 +70,13 @@ async function getData() {
     return defaultData;
   }
 
-  return normalizeData(data.data);
+  const normalized = normalizeData(data.data);
+
+  if (!Array.isArray(data.data?.categories) || data.data.categories.length === 0) {
+    await saveData(normalized);
+  }
+
+  return normalized;
 }
 
 async function saveData(newData: any) {
@@ -83,16 +98,11 @@ export async function GET() {
     const data = await getData();
 
     return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "no-store",
-      },
+      headers: { "Cache-Control": "no-store" },
     });
   } catch (error: any) {
     return NextResponse.json(
-      {
-        success: false,
-        message: error?.message || "Failed to load data",
-      },
+      { success: false, message: error?.message || "Failed to load data" },
       { status: 500 }
     );
   }
@@ -118,16 +128,10 @@ export async function POST(req: Request) {
 
     await saveData(data);
 
-    return NextResponse.json({
-      success: true,
-      data,
-    });
+    return NextResponse.json({ success: true, data });
   } catch (error: any) {
     return NextResponse.json(
-      {
-        success: false,
-        message: error?.message || "Failed to save data",
-      },
+      { success: false, message: error?.message || "Failed to save data" },
       { status: 500 }
     );
   }
