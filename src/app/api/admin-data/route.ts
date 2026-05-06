@@ -19,6 +19,18 @@ const defaultCategories = [
   { id: 4, name: "Grocery", image: "", link: "/category/grocery", active: true, order: 4 },
 ];
 
+const defaultAreas = [
+  {
+    id: 1,
+    name: "Loni",
+    active: true,
+    subAreas: [
+      { id: 101, name: "Balram Nagar", active: true },
+      { id: 102, name: "Indrapuri", active: true },
+    ],
+  },
+];
+
 const defaultData = {
   banners: [],
   categories: defaultCategories,
@@ -26,6 +38,7 @@ const defaultData = {
   orders: [],
   customers: [],
   referrals: [],
+  areas: defaultAreas,
   notificationSettings: defaultNotificationSettings,
 };
 
@@ -46,6 +59,10 @@ function normalizeData(data: any) {
     orders: data?.orders || [],
     customers: data?.customers || [],
     referrals: data?.referrals || [],
+    areas:
+      Array.isArray(data?.areas) && data.areas.length > 0
+        ? data.areas
+        : defaultAreas,
     notificationSettings:
       data?.notificationSettings || defaultNotificationSettings,
   };
@@ -72,7 +89,11 @@ async function getData() {
 
   const normalized = normalizeData(data.data);
 
-  if (!Array.isArray(data.data?.categories) || data.data.categories.length === 0) {
+  if (
+    !Array.isArray(data.data?.categories) ||
+    data.data.categories.length === 0 ||
+    !Array.isArray(data.data?.areas)
+  ) {
     await saveData(normalized);
   }
 
@@ -88,9 +109,7 @@ async function saveData(newData: any) {
     updated_at: new Date().toISOString(),
   });
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 }
 
 export async function GET() {
@@ -120,6 +139,7 @@ export async function POST(req: Request) {
       orders: body.orders ?? oldData.orders,
       customers: body.customers ?? oldData.customers,
       referrals: body.referrals ?? oldData.referrals,
+      areas: body.areas ?? oldData.areas,
       notificationSettings:
         body.notificationSettings ??
         oldData.notificationSettings ??

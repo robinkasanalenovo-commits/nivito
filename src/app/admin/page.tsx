@@ -67,11 +67,25 @@ type NotificationSettingsType = {
   updatedAt: number;
 };
 
+type SubAreaType = {
+  id: number;
+  name: string;
+  active: boolean;
+};
+
+type AreaType = {
+  id: number;
+  name: string;
+  active: boolean;
+  order: number;
+  subAreas: SubAreaType[];
+};
+
 type UnitType = "weight" | "pcs";
 type AutoVariantKey = "100g" | "250g" | "500g" | "1kg" | "2kg" | "5kg" | "1pc" | "2pc" | "3pc"| "4pc" | "5pc" | "6pc"| "7pc" | "8pc" | "9pc"| "10pc" | "11pc" | "12pc";
 type PriceMode = "auto" | "manual";
 
-const tabs = ["Dashboard", "Categories", "Products", "Orders", "Customers", "Settings"];
+const tabs = ["Dashboard", "Areas", "Categories", "Products", "Orders", "Customers", "Settings"];
 
 const weightOptions = ["100g", "250g", "500g", "1kg", "2kg", "5kg", "10kg", "1pc", "2pc", "3pc", "4pc", "5pc", "6pc", "7pc", "8pc", "9pc", "10pc", "11pc", "12pc"];
 
@@ -104,6 +118,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [banners, setBanners] = useState<BannerType[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [areas, setAreas] = useState<AreaType[]>([]);
   const [products, setProducts] = useState<ProductType[]>([]);
   const [orders, setOrders] = useState<OrderType[]>([]);
   const [notificationForm, setNotificationForm] = useState<NotificationSettingsType>(
@@ -124,6 +139,16 @@ export default function AdminPage() {
     active: true,
     order: 1,
   });
+
+  const [areaForm, setAreaForm] = useState({
+    name: "",
+    active: true,
+    order: 1,
+  });
+
+  const [subAreaForms, setSubAreaForms] = useState<
+    Record<number, { name: string; active: boolean }>
+  >({});
 
   const [productForm, setProductForm] = useState({
   name: "",
@@ -167,6 +192,25 @@ export default function AdminPage() {
   const [openProductId, setOpenProductId] = useState<number | null>(null);
   const [openOrderId, setOpenOrderId] = useState<number | null>(null);
 
+  const normalizeAreas = (items: any[]): AreaType[] => {
+    return (items || [])
+      .map((item, index) => ({
+        id: Number(item.id || Date.now() + index),
+        name: item.name || "",
+        active: item.active ?? true,
+        order: Number(item.order || index + 1),
+        subAreas: Array.isArray(item.subAreas)
+          ? item.subAreas.map((sub: any, subIndex: number) => ({
+              id: Number(sub.id || Date.now() + index + subIndex + 100),
+              name: sub.name || "",
+              active: sub.active ?? true,
+            }))
+          : [],
+      }))
+      .filter((item) => item.name.trim())
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  };
+
   const normalizeProducts = (items: any[]): ProductType[] => {
     return (items || []).map((item) => {
       if (Array.isArray(item.variants)) {
@@ -206,6 +250,7 @@ export default function AdminPage() {
     const data = await res.json();
     setBanners(data.banners || []);
     setCategories(data.categories || []);
+    setAreas(normalizeAreas(data.areas || []));
     setProducts(normalizeProducts(data.products || []));
     setOrders(data.orders || []);
     setNotificationForm({
@@ -222,6 +267,7 @@ export default function AdminPage() {
     banners: BannerType[];
     categories: CategoryType[];
     products: ProductType[];
+    areas?: AreaType[];
     orders?: OrderType[];
     notificationSettings?: NotificationSettingsType;
   }) => {
@@ -230,6 +276,7 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...newData,
+        areas: newData.areas ?? areas,
         orders: newData.orders ?? orders,
         notificationSettings:
           newData.notificationSettings || notificationForm || defaultNotificationSettings,
@@ -259,6 +306,7 @@ export default function AdminPage() {
       banners,
       categories,
       products,
+      areas,
       orders,
       notificationSettings: updatedNotification,
     }),
@@ -268,6 +316,159 @@ export default function AdminPage() {
 
   alert("Notification save हो गई ✅");
 };
+
+  const addArea = async () => {
+    if (!areaForm.name.trim()) {
+      alert("Area name डालो");
+      return;
+    }
+
+    const newArea: AreaType = {
+      id: Date.now(),
+      name: areaForm.name.trim(),
+      active: areaForm.active,
+      order: Number(areaForm.order || areas.length + 1),
+      subAreas: [],
+    };
+
+    await saveData({
+      banners,
+      categories,
+      areas: [...areas, newArea],
+      products,
+    });
+
+    setAreaForm({ name: "", active: true, order: areas.length + 2 });
+    alert("Area save हो गया ✅");
+  };
+
+  const addSubArea = async (areaId: number) => {
+    const form = subAreaForms[areaId] || { name: "", active: true };
+
+    if (!form.name.trim()) {
+      alert("Sub Area name डालो");
+      return;
+    }
+
+    const newSubArea: SubAreaType = {
+      id: Date.now(),
+      name: form.name.trim(),
+      active: form.active,
+    };
+
+    await saveData({
+      banners,
+      categories,
+      areas: areas.map((area) =>
+        area.id === areaId
+          ? { ...area, subAreas: [...(area.subAreas || []), newSubArea] }
+          : area
+      ),
+      products,
+    });
+
+    setSubAreaForms({
+      ...subAreaForms,
+      [areaId]: { name: "", active: true },
+    });
+
+    alert("Sub Area save हो गया ✅");
+  };
+
+  const toggleArea = async (id: number) => {
+    await saveData({
+      banners,
+      categories,
+      areas: areas.map((item) =>
+        item.id === id ? { ...item, active: !item.active } : item
+      ),
+      products,
+    });
+  };
+
+  const toggleSubArea = async (areaId: number, subAreaId: number) => {
+    await saveData({
+      banners,
+      categories,
+      areas: areas.map((area) =>
+        area.id === areaId
+          ? {
+              ...area,
+              subAreas: (area.subAreas || []).map((sub) =>
+                sub.id === subAreaId ? { ...sub, active: !sub.active } : sub
+              ),
+            }
+          : area
+      ),
+      products,
+    });
+  };
+
+  const deleteArea = async (id: number) => {
+    if (!confirm("Area delete करना है?")) return;
+
+    const filtered = areas.filter((item) => item.id !== id);
+    const reordered = filtered
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((item, index) => ({ ...item, order: index + 1 }));
+
+    await saveData({
+      banners,
+      categories,
+      areas: reordered,
+      products,
+    });
+  };
+
+  const deleteSubArea = async (areaId: number, subAreaId: number) => {
+    if (!confirm("Sub Area delete करना है?")) return;
+
+    await saveData({
+      banners,
+      categories,
+      areas: areas.map((area) =>
+        area.id === areaId
+          ? {
+              ...area,
+              subAreas: (area.subAreas || []).filter((sub) => sub.id !== subAreaId),
+            }
+          : area
+      ),
+      products,
+    });
+  };
+
+  const moveAreaUp = async (id: number) => {
+    const sorted = [...areas].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const index = sorted.findIndex((item) => item.id === id);
+    if (index <= 0) return;
+
+    const updated = [...sorted];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+
+    await saveData({
+      banners,
+      categories,
+      areas: updated.map((item, i) => ({ ...item, order: i + 1 })),
+      products,
+    });
+  };
+
+  const moveAreaDown = async (id: number) => {
+    const sorted = [...areas].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const index = sorted.findIndex((item) => item.id === id);
+    if (index === -1 || index >= sorted.length - 1) return;
+
+    const updated = [...sorted];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+
+    await saveData({
+      banners,
+      categories,
+      areas: updated.map((item, i) => ({ ...item, order: i + 1 })),
+      products,
+    });
+  };
 
   const addBanner = async () => {
     if (!bannerForm.image.trim()) {
@@ -732,6 +933,199 @@ export default function AdminPage() {
             <p className="mt-2 text-sm text-gray-500">
               ऊपर से Categories, Products, Orders, Customers या Settings select करके manage करें।
             </p>
+          </section>
+        )}
+
+
+        {activeTab === "Areas" && (
+          <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-xl font-extrabold">Manage Areas</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Customer signup में पहले Area, फिर Sub Area और फिर full address आएगा।
+                </p>
+              </div>
+
+              <div className="rounded-full bg-green-50 px-4 py-2 text-sm font-extrabold text-green-700">
+                {areas.length} Areas
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+              <h3 className="text-base font-extrabold">Add New Area</h3>
+
+              <div className="mt-3 grid gap-2 md:grid-cols-[1fr_140px_auto]">
+                <input
+                  value={areaForm.name}
+                  onChange={(e) => setAreaForm({ ...areaForm, name: e.target.value })}
+                  placeholder="Area Name, जैसे Loni"
+                  className="rounded-2xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-green-600"
+                />
+
+                <input
+                  type="number"
+                  value={areaForm.order}
+                  onChange={(e) =>
+                    setAreaForm({ ...areaForm, order: Number(e.target.value) })
+                  }
+                  placeholder="Order"
+                  className="rounded-2xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-green-600"
+                />
+
+                <button
+                  type="button"
+                  onClick={addArea}
+                  className="rounded-2xl bg-green-600 px-6 py-3 font-extrabold text-white shadow-md transition active:scale-95"
+                >
+                  Save Area
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {areas.length === 0 && (
+                <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
+                  अभी कोई area add नहीं है। पहले Area add करें।
+                </div>
+              )}
+
+              {[...areas]
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .map((area, index, array) => {
+                  const subForm = subAreaForms[area.id] || { name: "", active: true };
+
+                  return (
+                    <div
+                      key={area.id}
+                      className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5"
+                    >
+                      <div className="flex flex-col gap-3 rounded-2xl bg-white p-3 ring-1 ring-gray-200 md:flex-row md:items-center">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-extrabold text-green-700">
+                            {index + 1}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate text-base font-extrabold text-gray-900">
+                              📍 {area.name}
+                            </h3>
+                            <p className="mt-1 text-xs font-semibold text-gray-500">
+                              Sub Areas: {(area.subAreas || []).length} · {area.active ? "Active" : "Inactive"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-2 md:flex md:flex-shrink-0">
+                          <button
+                            onClick={() => moveAreaUp(area.id)}
+                            disabled={index === 0}
+                            className={`rounded-full px-3 py-2 text-xs font-bold ${
+                              index === 0
+                                ? "bg-gray-100 text-gray-400"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            ↑ Up
+                          </button>
+
+                          <button
+                            onClick={() => moveAreaDown(area.id)}
+                            disabled={index === array.length - 1}
+                            className={`rounded-full px-3 py-2 text-xs font-bold ${
+                              index === array.length - 1
+                                ? "bg-gray-100 text-gray-400"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            ↓ Down
+                          </button>
+
+                          <button
+                            onClick={() => toggleArea(area.id)}
+                            className="rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-700"
+                          >
+                            {area.active ? "Hide" : "Show"}
+                          </button>
+
+                          <button
+                            onClick={() => deleteArea(area.id)}
+                            className="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-gray-200">
+                        <h4 className="text-sm font-extrabold">Sub Area Add करें</h4>
+
+                        <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+                          <input
+                            value={subForm.name}
+                            onChange={(e) =>
+                              setSubAreaForms({
+                                ...subAreaForms,
+                                [area.id]: { ...subForm, name: e.target.value },
+                              })
+                            }
+                            placeholder="Sub Area, जैसे Balram Nagar"
+                            className="rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-600"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => addSubArea(area.id)}
+                            className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-extrabold text-white shadow-md transition active:scale-95"
+                          >
+                            Add Sub Area
+                          </button>
+                        </div>
+
+                        <div className="mt-3 grid gap-2 md:grid-cols-2">
+                          {(area.subAreas || []).length === 0 && (
+                            <div className="rounded-xl bg-gray-50 p-3 text-sm font-semibold text-gray-500 ring-1 ring-gray-100 md:col-span-2">
+                              इस area में अभी sub area नहीं है।
+                            </div>
+                          )}
+
+                          {(area.subAreas || []).map((sub) => (
+                            <div
+                              key={sub.id}
+                              className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 p-3 ring-1 ring-gray-100"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-extrabold text-gray-900">
+                                  {sub.name}
+                                </p>
+                                <p className="text-xs font-semibold text-gray-500">
+                                  {sub.active ? "Active" : "Inactive"}
+                                </p>
+                              </div>
+
+                              <div className="flex shrink-0 gap-2">
+                                <button
+                                  onClick={() => toggleSubArea(area.id, sub.id)}
+                                  className="rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-700"
+                                >
+                                  {sub.active ? "Hide" : "Show"}
+                                </button>
+
+                                <button
+                                  onClick={() => deleteSubArea(area.id, sub.id)}
+                                  className="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </section>
         )}
 

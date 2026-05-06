@@ -24,8 +24,28 @@ export default function LoginPage() {
         body: JSON.stringify({ mobile_number: mobile, password }),
       });
       const data = await res.json();
+      console.log("LOGIN CUSTOMER DATA:", data.customer);
       if (res.ok) {
-        localStorage.setItem("nivito_user", JSON.stringify(data.customer));
+       localStorage.setItem("nivito_user", JSON.stringify(data.customer));
+
+localStorage.setItem(
+  "nivito_customer",
+  JSON.stringify({
+    name:
+      data.customer.full_name ||
+      data.customer.name ||
+      "",
+
+    mobile:
+      data.customer.mobile_number ||
+      data.customer.mobile ||
+      "",
+
+    address:
+  data.customer.full_address ||
+  `${data.customer.area || ""}, ${data.customer.sub_area || ""}, ${data.customer.address || ""}`,
+  })
+);
         setMessage("Login successful");
         setTimeout(() => { window.location.href = "/profile"; }, 700);
       } else setMessage(data.message || "Login failed");
