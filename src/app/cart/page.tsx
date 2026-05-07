@@ -54,6 +54,7 @@ export default function CartPage() {
 
     try {
       const user = JSON.parse(savedCustomer);
+      console.log("CUSTOMER DATA:", user);
 
       setCustomerName(
         user.name ||
@@ -72,13 +73,16 @@ export default function CartPage() {
           ""
       );
 
-      setCustomerAddress(
-        user.address ||
-          user.fullAddress ||
-          user.customerAddress ||
-          user.deliveryAddress ||
-          ""
-      );
+     const resolvedAddress =
+  user.full_address ||
+  user.fullAddress ||
+  user.customerAddress ||
+  user.deliveryAddress ||
+  [user.address, user.area, user.sub_area || user.subArea, user.landmark]
+    .filter((v) => v && String(v).trim())
+    .join(", ") ||
+  "";
+setCustomerAddress(resolvedAddress);
     } catch {
       console.log("Customer data load nahi hua");
     }
@@ -193,14 +197,24 @@ if (savedCustomer) {
     finalCustomerMobile =
       user.mobile || user.mobile_number || user.mobileNumber || user.phone || "";
 
-    finalCustomerAddress =
-      user.address || user.fullAddress || user.full_address || "";
+   finalCustomerAddress =
+  user.full_address ||
+  user.fullAddress ||
+  user.address ||
+  [user.area, user.sub_area || user.subArea, user.landmark]
+    .filter((v) => v && String(v).trim())
+    .join(", ") ||
+  "";
   } catch {}
 }
 
-if (!finalCustomerMobile || !finalCustomerAddress) {
-  alert("Customer details नहीं मिली। पहले logout करके दुबारा login/signup करें।");
+if (!finalCustomerMobile) {
+  alert("Mobile number missing");
   return;
+}
+
+if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
+  finalCustomerAddress = customerAddress || "Address not provided";
 }
 
     setPlacing(true);
@@ -214,7 +228,7 @@ if (!finalCustomerMobile || !finalCustomerAddress) {
         orderId: `NIV-${Date.now()}`,
         customerName: finalCustomerName || "Customer",
         customerMobile: finalCustomerMobile,
-        address: finalCustomerAddress,
+        address: finalCustomerAddress || customerAddress || "Address missing",
         items: cart.map((i) => ({
           id: i.id,
           name: i.name,
@@ -315,7 +329,12 @@ if (!finalCustomerMobile || !finalCustomerAddress) {
 
   return (
     <main style={ui.page}>
-      <div style={{ ...ui.phone, paddingBottom: 120 }}>
+      <div
+  style={{
+    ...ui.phone,
+    padding: "0 16px 120px",
+  }}
+>
         <div style={ui.topBar}>
           <Link href="/" style={ui.iconBtn}><ArrowLeft size={20} /></Link>
           <div style={{ textAlign: "center" }}>

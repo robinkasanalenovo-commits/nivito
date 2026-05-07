@@ -31,19 +31,25 @@ export default function LoginPage() {
 localStorage.setItem(
   "nivito_customer",
   JSON.stringify({
-    name:
-      data.customer.full_name ||
-      data.customer.name ||
-      "",
-
-    mobile:
-      data.customer.mobile_number ||
-      data.customer.mobile ||
-      "",
-
-    address:
-  data.customer.full_address ||
-  `${data.customer.area || ""}, ${data.customer.sub_area || ""}, ${data.customer.address || ""}`,
+    name: data.customer.full_name || data.customer.name || "",
+    full_name: data.customer.full_name || data.customer.name || "",
+    mobile: data.customer.mobile_number || data.customer.mobile || "",
+    mobile_number: data.customer.mobile_number || data.customer.mobile || "",
+    phone: data.customer.mobile_number || data.customer.mobile || "",
+    full_address:
+      data.customer.full_address ||
+      [
+        data.customer.area,
+        data.customer.sub_area,
+        data.customer.address,
+        data.customer.landmark,
+      ]
+        .filter((v) => v && String(v).trim())
+        .join(", "),
+    address: data.customer.address || "",
+    area: data.customer.area || "",
+    sub_area: data.customer.sub_area || "",
+    landmark: data.customer.landmark || "",
   })
 );
         setMessage("Login successful");

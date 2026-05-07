@@ -145,10 +145,17 @@ export default function SignupPage() {
   "nivito_customer",
   JSON.stringify({
     name: fullName,
+    full_name: fullName,
     mobile: mobile,
-    address: `${selectedArea.name}, ${selectedSubArea.name}, ${fullAddress}${
+    mobile_number: mobile,
+    phone: mobile,
+    address: fullAddress,
+    full_address: `${selectedArea.name}, ${selectedSubArea.name}, ${fullAddress}${
       landmark.trim() ? `, Landmark: ${landmark}` : ""
     }`,
+    area: selectedArea.name,
+    sub_area: selectedSubArea.name,
+    landmark: landmark,
   })
 );
         setMessage("Account created successfully ✅");

@@ -45,6 +45,7 @@ type OrderItemType = {
 };
 
 type OrderType = {
+ 
   id: number;
   orderId: string;
   customerName: string;
@@ -57,6 +58,18 @@ type OrderType = {
   paymentStatus: string;
   orderStatus: string;
   createdAt: string;
+};
+
+type CustomerType = {
+  id: number;
+  full_name: string;
+  mobile_number: string;
+  area?: string;
+  sub_area?: string;
+  address?: string;
+  landmark?: string;
+  full_address?: string;
+  created_at?: string;
 };
 
 type NotificationSettingsType = {
@@ -121,6 +134,7 @@ export default function AdminPage() {
   const [areas, setAreas] = useState<AreaType[]>([]);
   const [products, setProducts] = useState<ProductType[]>([]);
   const [orders, setOrders] = useState<OrderType[]>([]);
+  const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [notificationForm, setNotificationForm] = useState<NotificationSettingsType>(
     defaultNotificationSettings
   );
@@ -253,6 +267,13 @@ export default function AdminPage() {
     setAreas(normalizeAreas(data.areas || []));
     setProducts(normalizeProducts(data.products || []));
     setOrders(data.orders || []);
+    const customerRes = await fetch("/api/customers", {
+  cache: "no-store",
+});
+
+const customerData = await customerRes.json();
+
+setCustomers(customerData.customers || []);
     setNotificationForm({
       ...defaultNotificationSettings,
       ...(data.notificationSettings || {}),
@@ -885,6 +906,209 @@ export default function AdminPage() {
       orders: orders.filter((order) => order.id !== orderId),
     });
   };
+  const getInvoiceNumber = (order: OrderType) => {
+  return `INV-${String(order.id).slice(-6)}`;
+};
+
+const getStatusIndex = (status: string) => {
+  const steps = ["Placed", "Confirmed", "Packed", "Out for Delivery", "Delivered"];
+  const index = steps.indexOf(status);
+  return index === -1 ? 0 : index;
+};
+
+const printOrderBill = (orderId: number) => {
+  const printContent = document.getElementById(`invoice-${orderId}`);
+  if (!printContent) return;
+
+  const win = window.open("", "_blank");
+  if (!win) return;
+
+  win.document.write(`
+    <html>
+      <head>
+        <title>Nivito Invoice</title>
+        <style>
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          body {
+            margin: 0;
+            padding: 16px;
+            background: #f8fafc;
+            font-family: Arial, sans-serif;
+            color: #111827;
+          }
+
+          #invoice-${orderId} {
+            max-width: 980px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 28px;
+            padding: 26px;
+            overflow: hidden;
+          }
+
+          #invoice-${orderId} > div:first-child {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 22px;
+          }
+
+          h2 {
+            margin: 0;
+            color: #07852f !important;
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+          }
+
+          h3 {
+            margin: 0;
+            color: #111827 !important;
+            font-size: 30px;
+            font-weight: 900;
+          }
+
+          h4 {
+            margin: 0 0 10px;
+            color: #6b7280 !important;
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+          }
+
+          p {
+            margin: 4px 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: #4b5563;
+          }
+
+          #invoice-${orderId} > div:nth-child(2) {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 22px;
+            background: #f9fafb !important;
+            border-radius: 26px;
+            padding: 22px;
+          }
+
+          #invoice-${orderId} > div:nth-child(2) p:first-of-type {
+            font-size: 18px;
+            font-weight: 900;
+            color: #111827;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 22px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            border-radius: 22px;
+          }
+
+          thead {
+            background: #f3f4f6 !important;
+          }
+
+          th {
+            padding: 14px 16px;
+            font-size: 13px;
+            font-weight: 900;
+            color: #6b7280 !important;
+            text-transform: uppercase;
+          }
+
+          td {
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 900;
+            color: #111827;
+            border-top: 1px solid #eef2f7;
+          }
+
+          th:nth-child(2),
+          td:nth-child(2) {
+            text-align: center;
+          }
+
+          th:nth-child(3),
+          th:nth-child(4),
+          td:nth-child(3),
+          td:nth-child(4) {
+            text-align: right;
+          }
+
+          #invoice-${orderId} > div:nth-last-child(2) {
+            margin-top: 22px;
+            background: #ecfdf3 !important;
+            border-radius: 26px;
+            padding: 22px;
+          }
+
+          #invoice-${orderId} > div:nth-last-child(2) > div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 900;
+            color: #1f2937;
+          }
+
+          #invoice-${orderId} > div:nth-last-child(2) > div:last-child {
+            margin-top: 14px;
+            padding-top: 16px;
+            border-top: 1px solid #bbf7d0;
+            color: #07852f !important;
+            font-size: 28px;
+            font-weight: 900;
+          }
+
+          #invoice-${orderId} > p:last-child {
+            margin-top: 24px;
+            text-align: center;
+            color: #9ca3af !important;
+            font-size: 14px;
+            font-weight: 800;
+          }
+
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+        </style>
+      </head>
+
+      <body>
+        ${printContent.outerHTML}
+      </body>
+    </html>
+  `);
+
+  win.document.close();
+
+  setTimeout(() => {
+    win.focus();
+    win.print();
+  }, 300);
+};
+
+const openWhatsAppOrder = (order: OrderType) => {
+  const text = encodeURIComponent(
+    `Nivito Order Update%0AOrder: ${order.orderId}%0AName: ${order.customerName}%0ATotal: ₹${order.grandTotal}%0AStatus: ${order.orderStatus}`
+  );
+
+  window.open(`https://wa.me/91${order.customerMobile}?text=${text}`, "_blank");
+};
 
   const previewBasePrice = Number(productForm.basePrice || 0);
 
@@ -1637,143 +1861,95 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
                           </button>
                         </div>
                       </div>
+{isOpen && (
+  <div className="border-t border-gray-100 bg-gray-50 p-3">
+    <div className="grid gap-3 md:grid-cols-4">
+      <select
+        value={form.weight}
+        onChange={(e) =>
+          setVariantForms({
+            ...variantForms,
+            [product.id]: { ...form, weight: e.target.value },
+          })
+        }
+        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none"
+      >
+        {weightOptions.map((weight) => (
+          <option key={weight} value={weight}>
+            {weight}
+          </option>
+        ))}
+      </select>
 
-                      {isOpen && (
-                        <div className="border-t border-gray-100 bg-gray-50 p-3 md:p-4">
-                          <div className="rounded-2xl bg-white p-3 ring-1 ring-gray-200">
-                            <h4 className="text-sm font-extrabold">
-                              Manual Variant Add करें
-                            </h4>
+      <input
+        type="number"
+        value={form.sellingPrice}
+        onChange={(e) =>
+          setVariantForms({
+            ...variantForms,
+            [product.id]: { ...form, sellingPrice: e.target.value },
+          })
+        }
+        placeholder="Selling Price"
+        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none"
+      />
 
-                            <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
-                              <select
-                                value={form.weight}
-                                onChange={(e) =>
-                                  setVariantForms({
-                                    ...variantForms,
-                                    [product.id]: {
-                                      ...form,
-                                      weight: e.target.value,
-                                    },
-                                  })
-                                }
-                                className="rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
-                              >
-                                {weightOptions.map((item) => (
-                                  <option key={item} value={item}>
-                                    {item}
-                                  </option>
-                                ))}
-                              </select>
+      <input
+        type="number"
+        value={form.stock}
+        onChange={(e) =>
+          setVariantForms({
+            ...variantForms,
+            [product.id]: { ...form, stock: e.target.value },
+          })
+        }
+        placeholder="Stock"
+        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none"
+      />
 
-                              <input
-                                type="number"
-                                value={form.sellingPrice}
-                                onChange={(e) =>
-                                  setVariantForms({
-                                    ...variantForms,
-                                    [product.id]: {
-                                      ...form,
-                                      sellingPrice: e.target.value,
-                                    },
-                                  })
-                                }
-                                placeholder="Selling Price"
-                                className="rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
-                              />
+      <button
+        onClick={() => addVariant(product.id)}
+        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-extrabold text-white shadow-md active:scale-95"
+      >
+        Add Variant
+      </button>
+    </div>
 
-                              <input
-                                type="number"
-                                value={form.stock}
-                                onChange={(e) =>
-                                  setVariantForms({
-                                    ...variantForms,
-                                    [product.id]: {
-                                      ...form,
-                                      stock: e.target.value,
-                                    },
-                                  })
-                                }
-                                placeholder="Stock Qty"
-                                className="rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
-                              />
+    <div className="mt-3 grid gap-2">
+      {(product.variants || []).map((variant) => (
+        <div
+          key={variant.id}
+          className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 ring-1 ring-gray-200"
+        >
+          <div>
+            <h4 className="text-sm font-extrabold text-gray-900">
+              {variant.weight} · ₹{variant.sellingPrice}
+            </h4>
+            <p className="text-xs font-semibold text-gray-500">
+              Stock: {variant.stock} · {variant.active ? "Active" : "Hidden"}
+            </p>
+          </div>
 
-                              <button
-                                type="button"
-                                onClick={() => addVariant(product.id)}
-                                className="flex min-h-[46px] items-center justify-center rounded-xl px-5 py-2 text-sm font-extrabold shadow-md transition-all hover:shadow-lg active:scale-95"
-                                style={{
-                                  backgroundColor: "#2563eb",
-                                  color: "#ffffff",
-                                  border: "1px solid #1d4ed8",
-                                  opacity: 1,
-                                }}
-                              >
-                                Add Variant
-                              </button>
-                            </div>
-                          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toggleVariant(product.id, variant.id)}
+              className="rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-700"
+            >
+              {variant.active ? "Hide" : "Show"}
+            </button>
 
-                          <div className="mt-3 grid gap-2">
-                            {(product.variants || []).length === 0 && (
-                              <div className="rounded-xl bg-white p-3 text-sm text-gray-500 ring-1 ring-gray-200">
-                                अभी इस product में कोई variant नहीं है।
-                              </div>
-                            )}
-
-                            {(product.variants || []).map((variant) => {
-                              const isOutOfStock = variant.stock <= 0;
-
-                              return (
-                                <div
-                                  key={variant.id}
-                                  className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl bg-white p-3 ring-1 ring-gray-200"
-                                >
-                                  <div>
-                                    <h4 className="text-sm font-extrabold">
-                                      {variant.weight} · ₹{variant.sellingPrice}
-                                    </h4>
-                                    <p className="text-xs font-semibold text-gray-500">
-                                      Stock: {variant.stock} ·{" "}
-                                      {variant.active ? "Active" : "Hidden"}
-                                    </p>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className={`hidden rounded-full px-3 py-2 text-center text-xs font-bold md:inline-block ${
-                                        isOutOfStock
-                                          ? "bg-red-100 text-red-700"
-                                          : "bg-green-100 text-green-700"
-                                      }`}
-                                    >
-                                      {isOutOfStock ? "Out" : "In Stock"}
-                                    </span>
-
-                                    <button
-                                      onClick={() =>
-                                        toggleVariant(product.id, variant.id)
-                                      }
-                                      className="rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-700"
-                                    >
-                                      {variant.active ? "Hide" : "Show"}
-                                    </button>
-
-                                    <button
-                                      onClick={() =>
-                                        deleteVariant(product.id, variant.id)
-                                      }
-                                      className="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700"
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+            <button
+              onClick={() => deleteVariant(product.id, variant.id)}
+              className="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
                     </div>
                   );
                 })}
@@ -1948,189 +2124,270 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
         )}
 
         {activeTab === "Orders" && (
-          <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-xl font-extrabold">Orders Management</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Customer के सारे orders यहाँ दिखेंगे।
-                </p>
-              </div>
+  <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 className="text-xl font-extrabold">Orders Management</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Invoice, payment और status सब यहीं manage होंगे।
+        </p>
+      </div>
 
-              <div className="rounded-full bg-green-50 px-4 py-2 text-sm font-extrabold text-green-700">
-                {orders.length} Orders
-              </div>
-            </div>
+      <div className="rounded-full bg-green-50 px-4 py-2 text-sm font-extrabold text-green-700">
+        {orders.length} Orders
+      </div>
+    </div>
 
-            <div className="mt-4 grid gap-3">
-              {orders.length === 0 ? (
-                <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
-                  अभी कोई order नहीं आया।
+    <div className="mt-4 grid gap-4">
+      {orders.length === 0 ? (
+        <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
+          अभी कोई order नहीं आया।
+        </div>
+      ) : (
+        orders.map((order) => {
+          const isOpen = openOrderId === order.id;
+          const statusSteps = ["Placed", "Confirmed", "Packed", "Out for Delivery", "Delivered"];
+          const currentStep = getStatusIndex(order.orderStatus || "Placed");
+
+          return (
+            <div key={order.id} className="rounded-3xl bg-gray-50 p-3 ring-1 ring-black/5">
+              <button
+                type="button"
+                onClick={() => setOpenOrderId(isOpen ? null : order.id)}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-4 text-left ring-1 ring-gray-200 active:scale-[0.99]"
+              >
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-base font-extrabold text-gray-900">
+                    👤 {order.customerName || "Customer"}
+                  </h3>
+                  <p className="mt-1 truncate text-xs font-bold text-gray-500">
+                    {getInvoiceNumber(order)} · #{order.orderId}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-gray-500">
+                    {new Date(order.createdAt).toLocaleString("en-IN")}
+                  </p>
                 </div>
-              ) : (
-                orders.map((order) => {
-                  const isOpen = openOrderId === order.id;
 
-                  return (
-                    <div
-                      key={order.id}
-                      className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5"
+                <div className="shrink-0 text-right">
+                  <p className="text-lg font-black text-green-700">
+                    ₹{order.grandTotal || 0}
+                  </p>
+                  <p className="text-xs font-bold text-gray-500">
+                    {order.orderStatus || "Placed"}
+                  </p>
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="mt-3 grid gap-3">
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <button
+                      onClick={() => printOrderBill(order.id)}
+                      className="rounded-2xl bg-blue-600 px-4 py-4 text-sm font-extrabold text-white shadow-md active:scale-95"
                     >
-                      <button
-                        type="button"
-                        onClick={() => setOpenOrderId(isOpen ? null : order.id)}
-                        className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-4 text-left ring-1 ring-gray-200 transition active:scale-[0.99]"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-base font-extrabold text-gray-900">
-                            👤 {order.customerName || "Customer"}
-                          </h3>
+                      🖨 Print / PDF
+                    </button>
 
-                          <p className="mt-1 truncate text-xs font-bold text-gray-500">
-                            #{order.orderId}
-                          </p>
+                    <a
+                      href={`tel:${order.customerMobile}`}
+                      className="rounded-2xl bg-green-600 px-4 py-4 text-center text-sm font-extrabold text-white no-underline shadow-md active:scale-95"
+                    >
+                      📞 Call Customer
+                    </a>
 
-                          <p className="mt-1 text-xs font-semibold text-gray-500">
-                            {new Date(order.createdAt).toLocaleString("en-IN")}
-                          </p>
-                        </div>
+                    <button
+                      onClick={() => openWhatsAppOrder(order)}
+                      className="rounded-2xl bg-purple-100 px-4 py-4 text-sm font-extrabold text-purple-700 shadow-sm active:scale-95"
+                    >
+                      💬 WhatsApp
+                    </button>
 
-                        <div className="shrink-0 text-right">
-                          <p className="text-lg font-black text-green-700">
-                            ₹{order.grandTotal}
-                          </p>
+                    <button
+                      onClick={() => deleteOrder(order.id)}
+                      className="rounded-2xl bg-red-100 px-4 py-4 text-sm font-extrabold text-red-700 shadow-sm active:scale-95"
+                    >
+                      🗑 Delete
+                    </button>
+                  </div>
 
-                          <p className="mt-1 rounded-full bg-green-50 px-3 py-1 text-xs font-extrabold text-green-700">
-                            {order.orderStatus || "Placed"}
-                          </p>
+                  <div className="rounded-2xl bg-white p-4 ring-1 ring-gray-200">
+                    <h3 className="text-sm font-extrabold text-gray-900">
+                      Order Status Timeline
+                    </h3>
 
-                          <p className="mt-1 text-xl font-black text-gray-400">
-                            {isOpen ? "⌃" : "⌄"}
-                          </p>
-                        </div>
-                      </button>
-
-                      {isOpen && (
-                        <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-gray-200">
-                          <div className="flex flex-col gap-2">
-                            <p className="text-sm font-bold text-gray-700">
-                              📞 {order.customerMobile || "No mobile"}
-                            </p>
-
-                            <p className="text-sm font-semibold text-gray-500">
-                              📍 {order.address || "No address"}
-                            </p>
-
-                            <div className="flex flex-wrap gap-2 pt-2">
-                              <select
-                                value={order.orderStatus}
-                                onChange={(e) =>
-                                  updateOrderStatus(order.id, e.target.value)
-                                }
-                                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-extrabold outline-none"
-                              >
-                                <option value="Placed">Placed</option>
-                                <option value="Confirmed">Confirmed</option>
-                                <option value="Out for Delivery">Out for Delivery</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                              </select>
-
-                              <button
-                                onClick={() => deleteOrder(order.id)}
-                                className="rounded-xl bg-red-100 px-3 py-2 text-xs font-extrabold text-red-700"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 grid gap-2">
-                            {(order.items || []).map((item) => (
-                              <div
-                                key={`${order.id}-${item.id}-${item.name}`}
-                                className="flex items-center gap-2 rounded-xl bg-gray-50 p-2 ring-1 ring-gray-100"
-                              >
-                                <div
-  style={{
-    width: 42,
-    height: 42,
-    minWidth: 42,
-    maxWidth: 42,
-    minHeight: 42,
-    maxHeight: 42,
-    borderRadius: 10,
-    background: "#ffffff",
-    overflow: "hidden",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "1px solid #e5e7eb",
-  }}
->
-  {item.image ? (
-    <img
-      src={item.image}
-      alt={item.name}
-      style={{
-        width: 34,
-        height: 34,
-        maxWidth: 34,
-        maxHeight: 34,
-        objectFit: "contain",
-        display: "block",
-      }}
-    />
-  ) : (
-    <span style={{ fontSize: 18 }}>🛒</span>
-  )}
-</div>
-
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-extrabold text-gray-900">
-                                    {item.name}
-                                  </p>
-
-                                  <p className="text-xs font-bold text-gray-500">
-                                    ₹{item.price} × {item.quantity}
-                                  </p>
-                                </div>
-
-                                <p className="shrink-0 text-right text-sm font-extrabold text-gray-900">
-                                  ₹{item.total}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="mt-3 flex items-center justify-between rounded-2xl bg-green-50 p-3">
-                            <span className="text-sm font-extrabold text-gray-700">
-                              Payment: {order.paymentStatus || "Pending"}
-                            </span>
-
-                            <span className="text-lg font-black text-green-700">
-                              ₹{order.grandTotal}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                    <div className="mt-4 grid grid-cols-5 gap-2">
+                      {statusSteps.map((step, index) => (
+                        <button
+                          key={step}
+                          onClick={() => updateOrderStatus(order.id, step)}
+                          className={`rounded-xl px-2 py-3 text-[10px] font-extrabold ${
+                            index <= currentStep
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {index <= currentStep ? "✓ " : ""}
+                          {step}
+                        </button>
+                      ))}
                     </div>
-                  );
-                })
+                  </div>
+
+                  <div
+                    id={`invoice-${order.id}`}
+                    className="rounded-[28px] bg-white p-5 ring-1 ring-gray-200"
+                  >
+                    <div className="flex items-start justify-between border-b border-gray-200 pb-5">
+                      <div>
+                        <h2 className="text-3xl font-black text-green-700">NIVITO</h2>
+                        <p className="text-sm font-bold text-gray-500">Fresh Groceries & Home Services</p>
+                        <p className="text-sm font-bold text-gray-500">Website: nivito.in</p>
+                        <p className="text-sm font-bold text-gray-500">Support: 9999878381</p>
+                      </div>
+
+                      <div className="text-right">
+                        <h3 className="text-2xl font-black text-gray-900">INVOICE</h3>
+                        <p className="text-sm font-bold text-gray-500">{getInvoiceNumber(order)}</p>
+                        <p className="text-sm font-bold text-gray-500">Order: #{order.orderId}</p>
+                        <p className="text-sm font-bold text-gray-500">
+                          {new Date(order.createdAt).toLocaleString("en-IN")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 rounded-3xl bg-gray-50 p-4 md:grid-cols-2">
+                      <div>
+                        <h4 className="text-xs font-black uppercase text-gray-500">Bill To</h4>
+                        <p className="mt-1 text-lg font-black text-gray-900">{order.customerName || "Customer"}</p>
+                        <p className="text-sm font-bold text-gray-600">
+  {order.customerMobile || "No mobile"}
+</p>
+
+<p className="mt-1 text-sm font-semibold text-gray-500">
+  {order.address && order.address.replaceAll(",", "").trim()
+    ? order.address
+    : "Address missing — customer से address confirm करें"}
+</p>
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs font-black uppercase text-gray-500">Payment / Status</h4>
+                        <p className="mt-1 text-sm font-bold text-gray-700">Payment: {order.paymentStatus || "Pending"}</p>
+                        <p className="text-sm font-bold text-gray-700">Status: {order.orderStatus || "Placed"}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-gray-200">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-100 text-xs uppercase text-gray-500">
+                          <tr>
+                            <th className="px-3 py-3">Product</th>
+                            <th className="px-3 py-3 text-center">Qty</th>
+                            <th className="px-3 py-3 text-right">Rate</th>
+                            <th className="px-3 py-3 text-right">Total</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {(order.items || []).map((item) => (
+                            <tr key={`${order.id}-${item.id}-${item.name}`} className="border-t border-gray-100">
+                              <td className="px-3 py-3 font-bold text-gray-900">{item.name}</td>
+                              <td className="px-3 py-3 text-center font-bold">{item.quantity}</td>
+                              <td className="px-3 py-3 text-right font-bold">₹{item.price}</td>
+                              <td className="px-3 py-3 text-right font-extrabold">₹{item.total}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 rounded-3xl bg-green-50 p-4">
+                      <div className="flex justify-between text-sm font-bold text-gray-700">
+                        <span>Item Total</span>
+                        <span>₹{order.itemTotal || 0}</span>
+                      </div>
+
+                      <div className="flex justify-between text-sm font-bold text-gray-700">
+                        <span>Delivery Fee</span>
+                        <span>₹{order.deliveryFee || 0}</span>
+                      </div>
+
+                      <div className="flex justify-between border-t border-green-200 pt-3 text-2xl font-black text-green-700">
+                        <span>Grand Total</span>
+                        <span>₹{order.grandTotal || 0}</span>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-center text-xs font-bold text-gray-400">
+                      Thank you for shopping with Nivito!
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
-          </section>
-        )}
+          );
+        })
+      )}
+    </div>
+  </section>
+)}
 
-        {activeTab === "Customers" && (
-          <section className="mt-4 rounded-[24px] bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
-            <h2 className="text-xl font-extrabold">Customers</h2>
-            <p className="mt-2 text-sm text-gray-500">
-              यह section next step में बनाएँगे।
-            </p>
-          </section>
-        )}
+      {activeTab === "Customers" && (
+  <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-xl font-extrabold">Customers</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Signup करने वाले सभी customers यहाँ दिखेंगे।
+        </p>
       </div>
+
+      <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700">
+        {customers.length} Customers
+      </div>
+    </div>
+
+    <div className="mt-4 grid gap-3">
+      {customers.length === 0 ? (
+        <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
+          अभी कोई customer नहीं है।
+        </div>
+      ) : (
+        customers.map((customer) => (
+          <div
+            key={customer.id}
+            className="rounded-2xl bg-gray-50 p-4 ring-1 ring-black/5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate text-base font-extrabold text-gray-900">
+                  👤 {customer.full_name}
+                </h3>
+
+                <p className="mt-1 text-sm font-bold text-gray-600">
+                  📞 {customer.mobile_number}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  📍{" "}
+                  {customer.full_address ||
+                    `${customer.area || ""}, ${customer.sub_area || ""}, ${customer.address || ""}`}
+                </p>
+
+                <p className="mt-2 text-xs text-gray-400">
+                  {customer.created_at
+                    ? new Date(customer.created_at).toLocaleString("en-IN")
+                    : ""}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </section>
+)}
+</div>
     </main>
   );
 }

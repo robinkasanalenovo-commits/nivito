@@ -28,11 +28,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const { data: customer, error } = await supabase
-      .from("customers")
-      .select("id, full_name, mobile_number, password, created_at")
-      .eq("mobile_number", cleanMobile)
-      .maybeSingle();
+   const { data: customer, error } = await supabase
+  .from("customers")
+  .select("id, full_name, mobile_number, password, area, sub_area, address, landmark, full_address, created_at")
+  .eq("mobile_number", cleanMobile)
+  .maybeSingle();
 
     if (error) {
       return NextResponse.json(
@@ -60,12 +60,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const safeCustomer = {
-      id: customer.id,
-      full_name: customer.full_name,
-      mobile_number: customer.mobile_number,
-      created_at: customer.created_at,
-    };
+   const safeCustomer = {
+  id: customer.id,
+  full_name: customer.full_name,
+  mobile_number: customer.mobile_number,
+  area: customer.area || "",
+  sub_area: customer.sub_area || "",
+  address: customer.address || "",
+  landmark: customer.landmark || "",
+  full_address: customer.full_address || [
+    customer.area,
+    customer.sub_area,
+    customer.address,
+    customer.landmark ? `Landmark: ${customer.landmark}` : "",
+  ].filter((v) => v && String(v).trim()).join(", "),
+  created_at: customer.created_at,
+};
 
     return NextResponse.json({
       message: "Login successful",
