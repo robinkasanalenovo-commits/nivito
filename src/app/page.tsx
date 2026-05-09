@@ -459,7 +459,7 @@ export default function HomePage() {
         border: "#f59e0b", text: "#78350f", slug: "home-cleaning",
       },
     ].map((s) => (
-      <Link key={s.slug} href={`/service/${s.slug}`} style={{
+      <Link key={s.slug} href={`/services?service=${s.slug}`} style={{
         textDecoration: "none", color: s.text,
         background: s.bg,
         borderRadius: 14, padding: "10px 10px 9px",

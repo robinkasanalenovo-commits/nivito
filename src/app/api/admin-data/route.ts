@@ -12,6 +12,25 @@ const defaultNotificationSettings = {
   updatedAt: 0,
 };
 
+const defaultServiceOptions = [
+  {
+    serviceName: "AC Service",
+    options: ["AC Service", "Gas Filling", "Cooling Problem", "Installation"],
+  },
+  {
+    serviceName: "RO Water",
+    options: ["RO Service", "Water Filter Change", "Low Water Flow", "Installation"],
+  },
+  {
+    serviceName: "Mobile Repair",
+    options: ["Screen Replacement", "Battery Change", "Charging Problem", "Speaker Problem"],
+  },
+  {
+    serviceName: "Home Cleaning",
+    options: ["Deep Cleaning", "Kitchen Cleaning", "Bathroom Cleaning", "Sofa Cleaning"],
+  },
+];
+
 const defaultCategories = [
   { id: 1, name: "Vegetables", image: "", link: "/category/vegetables", active: true, order: 1 },
   { id: 2, name: "Fruits", image: "", link: "/category/fruits", active: true, order: 2 },
@@ -36,6 +55,8 @@ const defaultData = {
   categories: defaultCategories,
   products: [],
   orders: [],
+  serviceRequests: [],
+  serviceOptions: defaultServiceOptions,
   customers: [],
   referrals: [],
   areas: defaultAreas,
@@ -57,6 +78,11 @@ function normalizeData(data: any) {
         : defaultCategories,
     products: data?.products || [],
     orders: data?.orders || [],
+    serviceRequests: data?.serviceRequests || [],
+    serviceOptions:
+      Array.isArray(data?.serviceOptions) && data.serviceOptions.length > 0
+        ? data.serviceOptions
+        : defaultServiceOptions,
     customers: data?.customers || [],
     referrals: data?.referrals || [],
     areas:
@@ -137,6 +163,8 @@ export async function POST(req: Request) {
       categories: body.categories ?? oldData.categories,
       products: body.products ?? oldData.products,
       orders: body.orders ?? oldData.orders,
+      serviceRequests: body.serviceRequests ?? oldData.serviceRequests,
+      serviceOptions: body.serviceOptions ?? oldData.serviceOptions,
       customers: body.customers ?? oldData.customers,
       referrals: body.referrals ?? oldData.referrals,
       areas: body.areas ?? oldData.areas,

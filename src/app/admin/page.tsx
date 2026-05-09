@@ -60,6 +60,24 @@ type OrderType = {
   createdAt: string;
 };
 
+type ServiceRequestType = {
+  id: number;
+  requestId: string;
+  serviceName: string;
+  problemType?: string;
+  customerName: string;
+  customerMobile: string;
+  address: string;
+  notes: string;
+  status: string;
+  createdAt: string;
+};
+
+type ServiceOptionConfigType = {
+  serviceName: string;
+  options: string[];
+};
+
 type CustomerType = {
   id: number;
   full_name: string;
@@ -94,11 +112,31 @@ type AreaType = {
   subAreas: SubAreaType[];
 };
 
+type RawAdminSubAreaType = Partial<SubAreaType>;
+
+type RawAdminAreaType = Partial<Omit<AreaType, "subAreas">> & {
+  subAreas?: RawAdminSubAreaType[];
+};
+
+type RawAdminProductType = Partial<ProductType> & {
+  sellingPrice?: number | string;
+  weight?: string;
+  stock?: number | string;
+  variants?: ProductVariantType[];
+};
+
 type UnitType = "weight" | "pcs";
 type AutoVariantKey = "100g" | "250g" | "500g" | "1kg" | "2kg" | "5kg" | "1pc" | "2pc" | "3pc"| "4pc" | "5pc" | "6pc"| "7pc" | "8pc" | "9pc"| "10pc" | "11pc" | "12pc";
 type PriceMode = "auto" | "manual";
 
-const tabs = ["Dashboard", "Areas", "Categories", "Products", "Orders", "Customers", "Settings"];
+const tabs = ["Dashboard", "Areas", "Categories", "Products", "Orders", "Service Requests", "Customers", "Settings"];
+
+const defaultServiceOptions: ServiceOptionConfigType[] = [
+  { serviceName: "AC Service", options: ["AC Service", "Gas Filling", "Cooling Problem", "Installation"] },
+  { serviceName: "RO Water", options: ["RO Service", "Water Filter Change", "Low Water Flow", "Installation"] },
+  { serviceName: "Mobile Repair", options: ["Screen Replacement", "Battery Change", "Charging Problem", "Speaker Problem"] },
+  { serviceName: "Home Cleaning", options: ["Deep Cleaning", "Kitchen Cleaning", "Bathroom Cleaning", "Sofa Cleaning"] },
+];
 
 const weightOptions = ["100g", "250g", "500g", "1kg", "2kg", "5kg", "10kg", "1pc", "2pc", "3pc", "4pc", "5pc", "6pc", "7pc", "8pc", "9pc", "10pc", "11pc", "12pc"];
 
@@ -134,6 +172,12 @@ export default function AdminPage() {
   const [areas, setAreas] = useState<AreaType[]>([]);
   const [products, setProducts] = useState<ProductType[]>([]);
   const [orders, setOrders] = useState<OrderType[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequestType[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOptionConfigType[]>(defaultServiceOptions);
+  const [serviceOptionForm, setServiceOptionForm] = useState({
+    serviceName: defaultServiceOptions[0].serviceName,
+    option: "",
+  });
   const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [notificationForm, setNotificationForm] = useState<NotificationSettingsType>(
     defaultNotificationSettings
@@ -206,7 +250,7 @@ export default function AdminPage() {
   const [openProductId, setOpenProductId] = useState<number | null>(null);
   const [openOrderId, setOpenOrderId] = useState<number | null>(null);
 
-  const normalizeAreas = (items: any[]): AreaType[] => {
+  const normalizeAreas = (items: RawAdminAreaType[]): AreaType[] => {
     return (items || [])
       .map((item, index) => ({
         id: Number(item.id || Date.now() + index),
@@ -214,7 +258,7 @@ export default function AdminPage() {
         active: item.active ?? true,
         order: Number(item.order || index + 1),
         subAreas: Array.isArray(item.subAreas)
-          ? item.subAreas.map((sub: any, subIndex: number) => ({
+          ? item.subAreas.map((sub, subIndex) => ({
               id: Number(sub.id || Date.now() + index + subIndex + 100),
               name: sub.name || "",
               active: sub.active ?? true,
@@ -225,11 +269,11 @@ export default function AdminPage() {
       .sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
-  const normalizeProducts = (items: any[]): ProductType[] => {
+  const normalizeProducts = (items: RawAdminProductType[]): ProductType[] => {
     return (items || []).map((item) => {
       if (Array.isArray(item.variants)) {
         return {
-          id: item.id,
+          id: Number(item.id || Date.now()),
           name: item.name || "",
           image: item.image || "",
           category: item.category || "General",
@@ -239,7 +283,7 @@ export default function AdminPage() {
       }
 
       return {
-        id: item.id,
+        id: Number(item.id || Date.now()),
         name: item.name || "",
         image: item.image || "",
         category: item.category || "General",
@@ -267,6 +311,12 @@ export default function AdminPage() {
     setAreas(normalizeAreas(data.areas || []));
     setProducts(normalizeProducts(data.products || []));
     setOrders(data.orders || []);
+    setServiceRequests(data.serviceRequests || []);
+    setServiceOptions(
+      Array.isArray(data.serviceOptions) && data.serviceOptions.length > 0
+        ? data.serviceOptions
+        : defaultServiceOptions
+    );
     const customerRes = await fetch("/api/customers", {
   cache: "no-store",
 });
@@ -281,7 +331,10 @@ setCustomers(customerData.customers || []);
   };
 
   useEffect(() => {
-    loadData();
+    queueMicrotask(() => {
+      void loadData();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveData = async (newData: {
@@ -290,6 +343,8 @@ setCustomers(customerData.customers || []);
     products: ProductType[];
     areas?: AreaType[];
     orders?: OrderType[];
+    serviceRequests?: ServiceRequestType[];
+    serviceOptions?: ServiceOptionConfigType[];
     notificationSettings?: NotificationSettingsType;
   }) => {
     await fetch("/api/admin-data", {
@@ -299,6 +354,8 @@ setCustomers(customerData.customers || []);
         ...newData,
         areas: newData.areas ?? areas,
         orders: newData.orders ?? orders,
+        serviceRequests: newData.serviceRequests ?? serviceRequests,
+        serviceOptions: newData.serviceOptions ?? serviceOptions,
         notificationSettings:
           newData.notificationSettings || notificationForm || defaultNotificationSettings,
       }),
@@ -340,7 +397,7 @@ setCustomers(customerData.customers || []);
 
   const addArea = async () => {
     if (!areaForm.name.trim()) {
-      alert("Area name डालो");
+      alert("Please enter an area name.");
       return;
     }
 
@@ -360,14 +417,14 @@ setCustomers(customerData.customers || []);
     });
 
     setAreaForm({ name: "", active: true, order: areas.length + 2 });
-    alert("Area save हो गया ✅");
+    alert("Area saved successfully.");
   };
 
   const addSubArea = async (areaId: number) => {
     const form = subAreaForms[areaId] || { name: "", active: true };
 
     if (!form.name.trim()) {
-      alert("Sub Area name डालो");
+      alert("Please enter a sub area name.");
       return;
     }
 
@@ -393,7 +450,7 @@ setCustomers(customerData.customers || []);
       [areaId]: { name: "", active: true },
     });
 
-    alert("Sub Area save हो गया ✅");
+    alert("Sub area saved successfully.");
   };
 
   const toggleArea = async (id: number) => {
@@ -426,7 +483,7 @@ setCustomers(customerData.customers || []);
   };
 
   const deleteArea = async (id: number) => {
-    if (!confirm("Area delete करना है?")) return;
+    if (!confirm("Delete this area?")) return;
 
     const filtered = areas.filter((item) => item.id !== id);
     const reordered = filtered
@@ -442,7 +499,7 @@ setCustomers(customerData.customers || []);
   };
 
   const deleteSubArea = async (areaId: number, subAreaId: number) => {
-    if (!confirm("Sub Area delete करना है?")) return;
+    if (!confirm("Delete this sub area?")) return;
 
     await saveData({
       banners,
@@ -906,6 +963,65 @@ setCustomers(customerData.customers || []);
       orders: orders.filter((order) => order.id !== orderId),
     });
   };
+  const updateServiceRequestStatus = async (requestId: number, status: string) => {
+    const updatedRequests = serviceRequests.map((request) =>
+      request.id === requestId ? { ...request, status } : request
+    );
+
+    await saveData({
+      banners,
+      categories,
+      products,
+      serviceRequests: updatedRequests,
+    });
+  };
+
+  const deleteServiceRequest = async (requestId: number) => {
+    if (!confirm("Service request delete karni hai?")) return;
+
+    await saveData({
+      banners,
+      categories,
+      products,
+      serviceRequests: serviceRequests.filter((request) => request.id !== requestId),
+    });
+  };
+
+  const addServiceOption = async () => {
+    const option = serviceOptionForm.option.trim();
+    if (!option) return;
+
+    const updatedOptions = serviceOptions.map((service) => {
+      if (service.serviceName !== serviceOptionForm.serviceName) return service;
+      if (service.options.some((item) => item.toLowerCase() === option.toLowerCase())) return service;
+      return { ...service, options: [...service.options, option] };
+    });
+
+    await saveData({
+      banners,
+      categories,
+      products,
+      serviceOptions: updatedOptions,
+    });
+
+    setServiceOptionForm((prev) => ({ ...prev, option: "" }));
+  };
+
+  const deleteServiceOption = async (serviceName: string, option: string) => {
+    const updatedOptions = serviceOptions.map((service) =>
+      service.serviceName === serviceName
+        ? { ...service, options: service.options.filter((item) => item !== option) }
+        : service
+    );
+
+    await saveData({
+      banners,
+      categories,
+      products,
+      serviceOptions: updatedOptions,
+    });
+  };
+
   const getInvoiceNumber = (order: OrderType) => {
   return `INV-${String(order.id).slice(-6)}`;
 };
@@ -1155,7 +1271,7 @@ const openWhatsAppOrder = (order: OrderType) => {
               Welcome to Admin Panel
             </h2>
             <p className="mt-2 text-sm text-gray-500">
-              ऊपर से Categories, Products, Orders, Customers या Settings select करके manage करें।
+              Select Areas, Categories, Products, Orders, Service Requests, Customers, or Settings from above to manage your store.
             </p>
           </section>
         )}
@@ -1167,7 +1283,7 @@ const openWhatsAppOrder = (order: OrderType) => {
               <div>
                 <h2 className="text-xl font-extrabold">Manage Areas</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Customer signup में पहले Area, फिर Sub Area और फिर full address आएगा।
+                  Customers will select an area first, then a sub area, then enter their full address during signup.
                 </p>
               </div>
 
@@ -1183,7 +1299,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                 <input
                   value={areaForm.name}
                   onChange={(e) => setAreaForm({ ...areaForm, name: e.target.value })}
-                  placeholder="Area Name, जैसे Loni"
+                  placeholder="Area name, for example Sector 56"
                   className="rounded-2xl border border-gray-300 bg-white px-4 py-3 outline-none focus:border-green-600"
                 />
 
@@ -1210,7 +1326,7 @@ const openWhatsAppOrder = (order: OrderType) => {
             <div className="mt-4 grid gap-3">
               {areas.length === 0 && (
                 <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
-                  अभी कोई area add नहीं है। पहले Area add करें।
+                  No areas have been added yet. Add your first delivery area.
                 </div>
               )}
 
@@ -1282,7 +1398,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                       </div>
 
                       <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-gray-200">
-                        <h4 className="text-sm font-extrabold">Sub Area Add करें</h4>
+                        <h4 className="text-sm font-extrabold">Add Sub Area</h4>
 
                         <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
                           <input
@@ -1293,7 +1409,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                                 [area.id]: { ...subForm, name: e.target.value },
                               })
                             }
-                            placeholder="Sub Area, जैसे Balram Nagar"
+                            placeholder="Sub area, for example Block A"
                             className="rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-600"
                           />
 
@@ -1309,7 +1425,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                         <div className="mt-3 grid gap-2 md:grid-cols-2">
                           {(area.subAreas || []).length === 0 && (
                             <div className="rounded-xl bg-gray-50 p-3 text-sm font-semibold text-gray-500 ring-1 ring-gray-100 md:col-span-2">
-                              इस area में अभी sub area नहीं है।
+                              This area does not have any sub areas yet.
                             </div>
                           )}
 
@@ -2332,13 +2448,173 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
   </section>
 )}
 
+      {activeTab === "Service Requests" && (
+  <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-xl font-extrabold">Service Requests</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Customers ki call requests yahan manage hongi.
+        </p>
+      </div>
+
+      <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-700">
+        {serviceRequests.length} Requests
+      </div>
+    </div>
+
+    <div className="mt-4 rounded-2xl bg-blue-50 p-4 ring-1 ring-blue-100">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end">
+        <div className="flex-1">
+          <label className="text-xs font-extrabold uppercase tracking-wide text-blue-700">
+            Service
+          </label>
+          <select
+            value={serviceOptionForm.serviceName}
+            onChange={(e) => setServiceOptionForm((prev) => ({ ...prev, serviceName: e.target.value }))}
+            className="mt-1 w-full rounded-xl border border-blue-100 bg-white px-3 py-3 text-sm font-bold outline-none"
+          >
+            {serviceOptions.map((service) => (
+              <option key={service.serviceName} value={service.serviceName}>
+                {service.serviceName}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-[1.4]">
+          <label className="text-xs font-extrabold uppercase tracking-wide text-blue-700">
+            Add problem option
+          </label>
+          <input
+            value={serviceOptionForm.option}
+            onChange={(e) => setServiceOptionForm((prev) => ({ ...prev, option: e.target.value }))}
+            placeholder="e.g. Gas Filling, Screen Replacement"
+            className="mt-1 w-full rounded-xl border border-blue-100 bg-white px-3 py-3 text-sm font-bold outline-none"
+          />
+        </div>
+        <button
+          onClick={addServiceOption}
+          className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-md active:scale-95"
+        >
+          Add Option
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {serviceOptions.map((service) => (
+          <div key={service.serviceName} className="rounded-2xl bg-white p-3 ring-1 ring-blue-100">
+            <h3 className="text-sm font-extrabold text-gray-900">{service.serviceName}</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {service.options.length === 0 ? (
+                <span className="text-xs font-bold text-gray-400">No options</span>
+              ) : (
+                service.options.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => deleteServiceOption(service.serviceName, option)}
+                    className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700 active:scale-95"
+                    title="Click to delete"
+                  >
+                    {option} ×
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="mt-4 grid gap-3">
+      {serviceRequests.length === 0 ? (
+        <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
+          Abhi koi service request nahi aayi.
+        </div>
+      ) : (
+        serviceRequests.map((request) => (
+          <div key={request.id} className="rounded-2xl bg-gray-50 p-4 ring-1 ring-black/5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-extrabold text-gray-900">
+                    {request.serviceName}
+                  </h3>
+                  {request.problemType && (
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-extrabold text-amber-700 ring-1 ring-amber-100">
+                      {request.problemType}
+                    </span>
+                  )}
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-blue-700 ring-1 ring-blue-100">
+                    {request.status || "New"}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm font-bold text-gray-700">
+                  {request.customerName || "Customer"} · {request.customerMobile}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {request.address || "Address not provided"}
+                </p>
+                {request.notes && (
+                  <p className="mt-2 rounded-xl bg-white p-3 text-sm font-semibold text-gray-600 ring-1 ring-black/5">
+                    {request.notes}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-gray-400">
+                  {request.createdAt ? new Date(request.createdAt).toLocaleString("en-IN") : ""}
+                </p>
+              </div>
+
+              <div className="grid min-w-[180px] gap-2">
+                <a
+                  href={`tel:${request.customerMobile}`}
+                  className="rounded-2xl bg-green-600 px-4 py-3 text-center text-sm font-extrabold text-white no-underline shadow-md active:scale-95"
+                >
+                  Call Customer
+                </a>
+                <a
+                  href={`https://wa.me/91${request.customerMobile}?text=${encodeURIComponent(`Nivito service request: ${request.serviceName}${request.problemType ? ` - ${request.problemType}` : ""}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-2xl bg-emerald-500 px-4 py-3 text-center text-sm font-extrabold text-white no-underline shadow-md active:scale-95"
+                >
+                  WhatsApp
+                </a>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => updateServiceRequestStatus(request.id, "Called")}
+                    className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-extrabold text-white active:scale-95"
+                  >
+                    Called
+                  </button>
+                  <button
+                    onClick={() => updateServiceRequestStatus(request.id, "Closed")}
+                    className="rounded-xl bg-gray-900 px-3 py-2 text-xs font-extrabold text-white active:scale-95"
+                  >
+                    Closed
+                  </button>
+                </div>
+                <button
+                  onClick={() => deleteServiceRequest(request.id)}
+                  className="rounded-xl bg-red-50 px-3 py-2 text-xs font-extrabold text-red-600 active:scale-95"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </section>
+)}
+
       {activeTab === "Customers" && (
   <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
     <div className="flex items-center justify-between">
       <div>
         <h2 className="text-xl font-extrabold">Customers</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Signup करने वाले सभी customers यहाँ दिखेंगे।
+          All customers who sign up will appear here.
         </p>
       </div>
 

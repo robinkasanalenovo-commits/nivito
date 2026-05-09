@@ -7,7 +7,7 @@ import {
   ShoppingBag, Gift, X, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, type CSSProperties } from "react";
 import { theme, ui } from "@/lib/theme";
 
 const TIPS = [10, 20, 30, 50];
@@ -28,7 +28,7 @@ const FALLBACK_COUPONS: Record<string, {
 type AppliedCoupon = { code: string; discount: number; message: string };
 
 export default function CartPage() {
-  const { cart, increaseQty, decreaseQty, removeFromCart } = useCart();
+  const { cart, increaseQty, decreaseQty, removeFromCart, clearCart } = useCart();
 
   const [placing, setPlacing] = useState(false);
   const [coupon, setCoupon] = useState("");
@@ -44,48 +44,50 @@ export default function CartPage() {
   const [customerAddress, setCustomerAddress] = useState("");
 
   useEffect(() => {
-    const savedCustomer =
-      localStorage.getItem("nivito_customer") ||
-      localStorage.getItem("customer") ||
-      localStorage.getItem("user") ||
-      localStorage.getItem("nivito_user");
+    queueMicrotask(() => {
+      const savedCustomer =
+        localStorage.getItem("nivito_customer") ||
+        localStorage.getItem("customer") ||
+        localStorage.getItem("user") ||
+        localStorage.getItem("nivito_user");
 
-    if (!savedCustomer) return;
+      if (!savedCustomer) return;
 
-    try {
-      const user = JSON.parse(savedCustomer);
-      console.log("CUSTOMER DATA:", user);
+      try {
+        const user = JSON.parse(savedCustomer);
+        console.log("CUSTOMER DATA:", user);
 
-      setCustomerName(
-        user.name ||
-          user.full_name ||
-          user.fullName ||
-          user.customerName ||
-          "Customer"
-      );
+        setCustomerName(
+          user.name ||
+            user.full_name ||
+            user.fullName ||
+            user.customerName ||
+            "Customer"
+        );
 
-      setCustomerMobile(
-        user.mobile ||
-          user.mobileNumber ||
-          user.mobile_number ||
-          user.phone ||
-          user.customerMobile ||
-          ""
-      );
+        setCustomerMobile(
+          user.mobile ||
+            user.mobileNumber ||
+            user.mobile_number ||
+            user.phone ||
+            user.customerMobile ||
+            ""
+        );
 
-     const resolvedAddress =
-  user.full_address ||
-  user.fullAddress ||
-  user.customerAddress ||
-  user.deliveryAddress ||
-  [user.address, user.area, user.sub_area || user.subArea, user.landmark]
-    .filter((v) => v && String(v).trim())
-    .join(", ") ||
-  "";
-setCustomerAddress(resolvedAddress);
-    } catch {
-      console.log("Customer data load nahi hua");
-    }
+        const resolvedAddress =
+          user.full_address ||
+          user.fullAddress ||
+          user.customerAddress ||
+          user.deliveryAddress ||
+          [user.address, user.area, user.sub_area || user.subArea, user.landmark]
+            .filter((v) => v && String(v).trim())
+            .join(", ") ||
+          "";
+        setCustomerAddress(resolvedAddress);
+      } catch {
+        console.log("Customer data load nahi hua");
+      }
+    });
   }, []);
 
   const itemTotal = useMemo(
@@ -256,7 +258,7 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
         body: JSON.stringify({ ...data, orders: [newOrder, ...(data.orders || [])] }),
       });
 
-      cart.forEach((i) => removeFromCart(i.id));
+      clearCart();
       alert("Order place ho gaya ✅");
     } catch {
       alert("Order save nahi hua, dobara try karo");
@@ -795,7 +797,7 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
               placeholder="E.g. Bell mat bajao, baby so raha hai"
               rows={2}
               style={{
-                ...(ui.fieldInput as any),
+                ...(ui.fieldInput as CSSProperties),
                 marginTop: 10,
                 fontSize: 12,
                 resize: "none",

@@ -12,10 +12,11 @@ type CartItem = {
 
 type CartContextType = {
   cart: CartItem[];
-  addToCart: (item: Omit<CartItem, "quantity">) => void;
+  addToCart: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
   removeFromCart: (id: number) => void;
   increaseQty: (id: number) => void;
   decreaseQty: (id: number) => void;
+  clearCart: () => void;
   loading: boolean;
 };
 
@@ -26,17 +27,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem("cart");
+    queueMicrotask(() => {
+      try {
+        const savedCart = localStorage.getItem("cart");
 
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
+        if (savedCart) {
+          const parsedCart = JSON.parse(savedCart);
+          setCart(Array.isArray(parsedCart) ? parsedCart : []);
+        }
+      } catch {
+        localStorage.removeItem("cart");
       }
-    } catch {
-      localStorage.removeItem("cart");
-    }
 
-    setLoading(false);
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -45,7 +49,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, loading]);
 
-  const addToCart = (item: Omit<CartItem, "quantity">) => {
+  const addToCart = (item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
+    const qtyToAdd = item.quantity || 1;
+
     setCart((prev) => {
       const existingItem = prev.find((i) => i.id === item.id);
 
@@ -54,7 +60,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           i.id === item.id
             ? {
                 ...i,
-                quantity: i.quantity + 1,
+                quantity: i.quantity + qtyToAdd,
                 image: item.image || i.image,
               }
             : i
@@ -64,8 +70,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [
         ...prev,
         {
-          ...item,
-          quantity: 1,
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: qtyToAdd,
         },
       ];
     });
@@ -93,6 +102,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -101,6 +114,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         increaseQty,
         decreaseQty,
+        clearCart,
         loading,
       }}
     >

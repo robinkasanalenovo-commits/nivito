@@ -43,6 +43,13 @@ type AdminDataResponse = {
 
 type SortKey = "popular" | "price_low" | "price_high" | "discount";
 
+const SERVICE_CATEGORIES = [
+  { name: "AC Service", desc: "Repair & Install", emoji: "❄️", href: "/services?service=ac-service", bg: "#cffafe", text: "#155e75" },
+  { name: "RO Water", desc: "Filter & Purifier", emoji: "💧", href: "/services?service=ro-water", bg: "#dbeafe", text: "#1e3a8a" },
+  { name: "Mobile Repair", desc: "Screen & Battery", emoji: "📱", href: "/services?service=mobile-repair", bg: "#ede9fe", text: "#4c1d95" },
+  { name: "Home Cleaning", desc: "Deep clean expert", emoji: "🧹", href: "/services?service=home-cleaning", bg: "#fef3c7", text: "#78350f" },
+];
+
 function slugify(text: string) {
   return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
@@ -54,6 +61,9 @@ function getCategoryLinkSlug(category: Category) {
   const link = category.link || "";
   const parts = link.split("/").filter(Boolean);
   return parts[parts.length - 1] || slugify(category.name);
+}
+function getCategoryHref(category: Category) {
+  return category.link?.trim() || `/category/${getCategoryLinkSlug(category)}`;
 }
 function isSameCategory(productCategory: string, currentSlug: string, categories: Category[]) {
   const productCategorySlug = slugify(productCategory || "General");
@@ -85,6 +95,7 @@ export default function CategoryProductsPage() {
   const { cart, addToCart, increaseQty, decreaseQty } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [categoryName, setCategoryName] = useState("Products");
   const [selectedVariants, setSelectedVariants] = useState<Record<number, ProductVariant>>({});
   const [searchText, setSearchText] = useState("");
@@ -92,6 +103,7 @@ export default function CategoryProductsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("popular");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const isCategoryOverview = slug === "all";
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -102,13 +114,16 @@ export default function CategoryProductsPage() {
         const data: AdminDataResponse = await res.json();
 
         const activeCategories = (data.categories || []).filter((c) => c.active);
+        setCategories(activeCategories);
         const matchedCategory = activeCategories.find(
           (c) => slugify(c.name) === slug || getCategoryLinkSlug(c) === slug
         );
         setCategoryName(
-          matchedCategory?.name ||
-            slug.replace(/-/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase()) ||
-            "Products"
+          isCategoryOverview
+            ? "All Categories"
+            : matchedCategory?.name ||
+                slug.replace(/-/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase()) ||
+                "Products"
         );
 
         const filtered = (data.products || [])
@@ -120,7 +135,7 @@ export default function CategoryProductsPage() {
             variants: (p.variants || []).filter((v) => v.active),
           }))
           .filter((p) => p.variants.length > 0)
-          .filter((p) => isSameCategory(p.category, slug, activeCategories));
+          .filter((p) => isCategoryOverview || isSameCategory(p.category, slug, activeCategories));
 
         setProducts(filtered);
         const defaults: Record<number, ProductVariant> = {};
@@ -142,7 +157,7 @@ export default function CategoryProductsPage() {
       window.removeEventListener("focus", loadProducts);
       window.removeEventListener("pageshow", loadProducts);
     };
-  }, [slug]);
+  }, [isCategoryOverview, slug]);
 
   const visibleProducts = useMemo(() => {
     let result = [...products];
@@ -245,37 +260,38 @@ export default function CategoryProductsPage() {
             </Link>
           </div>
 
-          {/* SEARCH */}
-          <div style={{
-            marginTop: 12,
-            background: "rgba(255,255,255,0.95)",
-            borderRadius: 14, padding: "10px 14px",
-            display: "flex", alignItems: "center", gap: 10,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-          }}>
-            <Search size={16} color={theme.gray[500]} />
-            <input
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder='Search "tomato", "milk"...'
-              style={{
-                flex: 1, border: "none", outline: "none",
-                background: "transparent", fontSize: 13, fontWeight: 600,
-                color: theme.gray[900],
-              }}
-            />
-            {searchText && (
-              <button onClick={() => setSearchText("")}
+          {!isCategoryOverview && (
+            <div style={{
+              marginTop: 12,
+              background: "rgba(255,255,255,0.95)",
+              borderRadius: 14, padding: "10px 14px",
+              display: "flex", alignItems: "center", gap: 10,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+            }}>
+              <Search size={16} color={theme.gray[500]} />
+              <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder='Search "tomato", "milk"...'
                 style={{
-                  border: "none", background: theme.gray[100],
-                  width: 22, height: 22, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", color: theme.gray[500],
-                }}>
-                <X size={12} />
-              </button>
-            )}
-          </div>
+                  flex: 1, border: "none", outline: "none",
+                  background: "transparent", fontSize: 13, fontWeight: 600,
+                  color: theme.gray[900],
+                }}
+              />
+              {searchText && (
+                <button onClick={() => setSearchText("")}
+                  style={{
+                    border: "none", background: theme.gray[100],
+                    width: 22, height: 22, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", color: theme.gray[500],
+                  }}>
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ════════ BREADCRUMB + COUNT ════════ */}
@@ -287,10 +303,14 @@ export default function CategoryProductsPage() {
           </div>
           <div style={{ fontSize: 11, fontWeight: 800, color: theme.gray[700] }}>
             <Package size={11} style={{ display: "inline", marginRight: 4, verticalAlign: -1 }} />
-            {visibleProducts.length} items
+            {isCategoryOverview ? `${SERVICE_CATEGORIES.length + categories.length} categories` : `${visibleProducts.length} items`}
           </div>
         </div>
 
+        {isCategoryOverview ? (
+          <CategoryOverview categories={categories} />
+        ) : (
+          <>
         {/* ════════ FILTERS BAR ════════ */}
         <div style={{
           display: "flex", gap: 8, overflowX: "auto",
@@ -513,8 +533,8 @@ export default function CategoryProductsPage() {
                       <button onClick={() => addToCart({
                         id: cartId,
                         name: `${product.name} - ${selectedVariant.weight}`,
-                        price, image: product.image, quantity: 1,
-                      } as any)}
+                        price, image: product.image,
+                      })}
                         style={{
                           padding: "7px 14px", borderRadius: 8,
                           background: theme.primary.gradient, color: "#fff",
@@ -554,6 +574,8 @@ export default function CategoryProductsPage() {
               );
             })}
           </div>
+        )}
+          </>
         )}
       </div>
 
@@ -618,6 +640,144 @@ right: 0,
 }
 
 // ═══════════ SUB COMPONENTS ═══════════
+
+function CategoryOverview({ categories }: { categories: Category[] }) {
+  const groceryPalette = [
+    { bg: "#d1fae5", text: "#064e3b", emoji: "🥬" },
+    { bg: "#fee2e2", text: "#7f1d1d", emoji: "🍎" },
+    { bg: "#dbeafe", text: "#1e3a8a", emoji: "🥛" },
+    { bg: "#fef3c7", text: "#78350f", emoji: "🛒" },
+  ];
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div style={{
+        background: "linear-gradient(135deg, #eff6ff, #f8fafc)",
+        border: "1px solid #dbeafe",
+        borderRadius: 18,
+        padding: 14,
+        boxShadow: theme.shadow.sm,
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 900, color: "#1e3a8a", margin: 0 }}>🔧 Home Services</h2>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", margin: "3px 0 0" }}>Quick help for home needs</p>
+          </div>
+          <span style={{
+            fontSize: 9,
+            fontWeight: 900,
+            color: "#fff",
+            background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+            padding: "4px 9px",
+            borderRadius: 999,
+          }}>SERVICES</span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+          {SERVICE_CATEGORIES.map((service) => (
+            <Link key={service.name} href={service.href} style={{
+              minHeight: 74,
+              borderRadius: 14,
+              padding: 10,
+              background: service.bg,
+              color: service.text,
+              textDecoration: "none",
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              border: "1px solid rgba(255,255,255,0.8)",
+            }}>
+              <span style={{
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.85)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 18,
+                flexShrink: 0,
+              }}>{service.emoji}</span>
+              <span style={{ minWidth: 0 }}>
+                <strong style={{ display: "block", fontSize: 12, lineHeight: 1.15 }}>{service.name}</strong>
+                <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, opacity: 0.78, marginTop: 2 }}>{service.desc}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        background: "linear-gradient(135deg, #ecfdf5, #fffbeb)",
+        border: "1px solid #d1fae5",
+        borderRadius: 18,
+        padding: 14,
+        boxShadow: theme.shadow.sm,
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 900, color: "#064e3b", margin: 0 }}>🛒 Shop Groceries</h2>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#047857", margin: "3px 0 0" }}>Fresh daily essentials</p>
+          </div>
+          <span style={{
+            fontSize: 9,
+            fontWeight: 900,
+            color: "#fff",
+            background: theme.primary.gradient,
+            padding: "4px 9px",
+            borderRadius: 999,
+          }}>{categories.length} TYPES</span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {categories.map((category, idx) => {
+            const c = groceryPalette[idx % groceryPalette.length];
+            return (
+              <Link key={category.id} href={getCategoryHref(category)} style={{
+                minHeight: 118,
+                borderRadius: 14,
+                padding: "8px 6px",
+                background: c.bg,
+                color: c.text,
+                textDecoration: "none",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "space-between",
+                textAlign: "center",
+                border: "1px solid rgba(255,255,255,0.8)",
+              }}>
+                <span style={{
+                  width: "100%",
+                  aspectRatio: "1/1",
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.72)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  fontSize: 30,
+                }}>
+                  {category.image ? (
+                    <img src={category.image} alt={category.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : c.emoji}
+                </span>
+                <strong style={{
+                  fontSize: 11,
+                  lineHeight: 1.15,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}>{category.name}</strong>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function FilterChip({ active, onClick, icon, label }: {
   active: boolean; onClick: () => void; icon: React.ReactNode; label: string;

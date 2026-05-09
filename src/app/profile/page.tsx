@@ -274,7 +274,7 @@ export default function ProfilePage() {
         {/* Bottom Nav */}
         <nav style={styles.bottomNav}>
           <BottomNavItem href="/" icon="🏠" label="Home" />
-          <BottomNavItem href="/#categories" icon="▦" label="Categories" />
+          <BottomNavItem href="/category/all" icon="▦" label="Categories" />
           <BottomNavItem href="/cart" icon="🛒" label="Cart" badge="2" />
           <BottomNavItem href="/profile" icon="👤" label="Profile" active />
         </nav>
