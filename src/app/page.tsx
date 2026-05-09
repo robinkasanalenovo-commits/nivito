@@ -16,6 +16,18 @@ type Variant = { id: number; weight: string; sellingPrice: number; stock: number
 type Product = { id: number; name: string; image: string; category: string; active: boolean; variants: Variant[] };
 type NotifSettings = { title: string; message: string; active: boolean; showPopup: boolean; updatedAt: number };
 type LoginUser = { id: number; full_name: string; mobile_number: string };
+type CartItem = { id: number; name: string; price: number; quantity: number; image?: string };
+type ProductCardProps = {
+  product: Product;
+  selectedVariants: Record<number, Variant>;
+  setSelectedVariants: React.Dispatch<React.SetStateAction<Record<number, Variant>>>;
+  cart: CartItem[];
+  addToCart: (item: Omit<CartItem, "quantity">) => void;
+  increaseQty: (id: number) => void;
+  decreaseQty: (id: number) => void;
+  getCartId: (productId: number, variantId: number) => number;
+  compact?: boolean;
+};
 
 const defaultNotif: NotifSettings = { title: "", message: "", active: false, showPopup: true, updatedAt: 0 };
 
@@ -46,6 +58,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const u = window.localStorage.getItem("nivito_user");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (u) { try { setLoginUser(JSON.parse(u)); } catch {} }
     const l = window.localStorage.getItem("nivito_location");
     if (l) setLocation(l);
@@ -267,11 +280,11 @@ export default function HomePage() {
 {adminCategories.length > 0 && (
   <div style={{
     background: "linear-gradient(135deg, #ecfdf5 0%, #fffbeb 100%)",
-    borderRadius: 20, padding: "16px 12px",
+    borderRadius: 18, padding: "14px 12px",
     border: "1.5px solid #d1fae5",
     boxShadow: "0 4px 14px rgba(5,150,105,0.08)",
   }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
       <div>
         <h3 style={{
           fontSize: 16, fontWeight: 900, color: "#064e3b",
@@ -357,14 +370,50 @@ export default function HomePage() {
   </div>
 )}
 
+        {/* SEARCH RESULTS or SECTIONS */}
+        {search.trim() || activePill !== "all" ? (
+          <div>
+            <SectionHeader title={search.trim() ? `Results (${filteredProducts.length})` : "Products"} />
+            {filteredProducts.length === 0 ? (
+              <EmptyCard text="Kuch nahi mila 😔" />
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8 }}>
+                {filteredProducts.map((p) => (
+                  <ProductCard key={p.id} product={p}
+                    selectedVariants={selectedVariants} setSelectedVariants={setSelectedVariants}
+                    cart={cart} addToCart={addToCart} increaseQty={increaseQty} decreaseQty={decreaseQty}
+                    getCartId={getCartId} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {adminProducts.length > 0 && (
+              <div>
+                <SectionHeader title="🔥 Popular Picks" link="/category/all" />
+                <HScroll>
+                  {adminProducts.slice(0, 10).map((p) => (
+                    <div key={p.id} style={{ flexShrink: 0, width: 138 }}>
+                      <ProductCard product={p}
+                        selectedVariants={selectedVariants} setSelectedVariants={setSelectedVariants}
+                        cart={cart} addToCart={addToCart} increaseQty={increaseQty} decreaseQty={decreaseQty}
+                        getCartId={getCartId} compact />
+                    </div>
+                  ))}
+                </HScroll>
+              </div>
+            )}
+
+
 {/* ════════ HOME SERVICES — 2 col BIG premium cards ════════ */}
 <div style={{
   background: "linear-gradient(135deg, #eff6ff 0%, #fef3c7 100%)",
-  borderRadius: 20, padding: "16px 12px",
+  borderRadius: 18, padding: "14px 12px",
   border: "1.5px solid #dbeafe",
   boxShadow: "0 4px 14px rgba(37,99,235,0.08)",
 }}>
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
     <div>
       <h3 style={{
         fontSize: 16, fontWeight: 900, color: "#1e3a8a",
@@ -413,12 +462,12 @@ export default function HomePage() {
       <Link key={s.slug} href={`/service/${s.slug}`} style={{
         textDecoration: "none", color: s.text,
         background: s.bg,
-        borderRadius: 16, padding: "12px 12px 10px",
+        borderRadius: 14, padding: "10px 10px 9px",
         border: `2px solid ${s.border}30`,
         boxShadow: `0 4px 12px ${s.border}25`,
         display: "flex", flexDirection: "column",
         position: "relative", overflow: "hidden",
-        minHeight: 110,
+        minHeight: 92,
       }}>
         {/* Floating large emoji */}
         <div style={{
@@ -429,19 +478,19 @@ export default function HomePage() {
         {/* Foreground content */}
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: 34, height: 34, borderRadius: 10,
             background: "rgba(255,255,255,0.85)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 24, marginBottom: 8,
+            fontSize: 20, marginBottom: 6,
             boxShadow: `0 3px 8px ${s.border}30`,
           }}>{s.emoji}</div>
           <div style={{
-            fontSize: 13, fontWeight: 900, lineHeight: 1.15,
+            fontSize: 12, fontWeight: 900, lineHeight: 1.15,
             marginBottom: 2,
           }}>{s.name}</div>
           <div style={{
             fontSize: 9.5, fontWeight: 700, opacity: 0.75,
-            marginBottom: 8,
+            marginBottom: 6,
           }}>{s.desc}</div>
           <div style={{
             fontSize: 10, fontWeight: 900,
@@ -458,7 +507,7 @@ export default function HomePage() {
   </div>
   <Link href="/services" style={{
     display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-    marginTop: 12, padding: "10px 0",
+    marginTop: 12, padding: "9px 0",
     borderRadius: 12,
     background: "linear-gradient(135deg, #3b82f6, #2563eb)",
     color: "#fff", textDecoration: "none",
@@ -468,41 +517,6 @@ export default function HomePage() {
     View all services <ArrowRight size={13} />
   </Link>
 </div>
-
-        {/* SEARCH RESULTS or SECTIONS */}
-        {search.trim() || activePill !== "all" ? (
-          <div>
-            <SectionHeader title={search.trim() ? `Results (${filteredProducts.length})` : "Products"} />
-            {filteredProducts.length === 0 ? (
-              <EmptyCard text="Kuch nahi mila 😔" />
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8 }}>
-                {filteredProducts.map((p) => (
-                  <ProductCard key={p.id} product={p}
-                    selectedVariants={selectedVariants} setSelectedVariants={setSelectedVariants}
-                    cart={cart} addToCart={addToCart} increaseQty={increaseQty} decreaseQty={decreaseQty}
-                    getCartId={getCartId} />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <>
-            {adminProducts.length > 0 && (
-              <div>
-                <SectionHeader title="🔥 Popular Picks" link="/category/all" />
-                <HScroll>
-                  {adminProducts.slice(0, 10).map((p) => (
-                    <div key={p.id} style={{ flexShrink: 0, width: 138 }}>
-                      <ProductCard product={p}
-                        selectedVariants={selectedVariants} setSelectedVariants={setSelectedVariants}
-                        cart={cart} addToCart={addToCart} increaseQty={increaseQty} decreaseQty={decreaseQty}
-                        getCartId={getCartId} compact />
-                    </div>
-                  ))}
-                </HScroll>
-              </div>
-            )}
 
             {sections.map(({ category, products }) => (
               <div key={category.id}>
@@ -556,7 +570,7 @@ export default function HomePage() {
               padding: "12px 14px", borderRadius: 12,
               background: location === l ? "#ecfdf5" : "#fff",
               border: location === l ? "2px solid #059669" : "1px solid #e5e7eb",
-              cursor: "pointer", marginBottom: 8, textAlign: "left",
+              cursor: "pointer", marginBottom: 6, textAlign: "left",
             }}>
               <MapPin size={16} color="#059669" />
               <span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{l}</span>
@@ -628,7 +642,7 @@ function DefaultHero() {
       borderRadius: 16, padding: 14, color: "#fff",
       display: "flex", alignItems: "center", gap: 10,
       boxShadow: "0 12px 28px rgba(5,150,105,0.3)",
-      position: "relative", overflow: "hidden", minHeight: 110,
+      position: "relative", overflow: "hidden", minHeight: 92,
     }}>
       <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 2 }}>
         <span style={{
@@ -659,11 +673,11 @@ function DefaultHero() {
   );
 }
 
-function ProductCard({ product, selectedVariants, setSelectedVariants, cart, addToCart, increaseQty, decreaseQty, getCartId, compact }: any) {
+function ProductCard({ product, selectedVariants, setSelectedVariants, cart, addToCart, increaseQty, decreaseQty, getCartId, compact }: ProductCardProps) {
   const v = selectedVariants[product.id] || product.variants[0];
   if (!v) return null;
   const cartId = getCartId(product.id, v.id);
-  const item = cart.find((i: any) => i.id === cartId);
+  const item = cart.find((i) => i.id === cartId);
   const qty = item?.quantity ?? 0;
   const price = Number(v.sellingPrice || 0);
   const mrp = getMrp(price);
@@ -747,8 +761,8 @@ function ProductCard({ product, selectedVariants, setSelectedVariants, cart, add
         ) : qty === 0 ? (
           <button onClick={() => addToCart({
             id: cartId, name: `${product.name} - ${v.weight}`,
-            price, image: product.image, quantity: 1,
-          } as any)}
+            price, image: product.image,
+          })}
             style={{
               width: "100%", padding: "6px 0", borderRadius: 7,
               background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff",
@@ -803,7 +817,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         background: "#fff", borderRadius: "24px 24px 0 0",
         padding: 18, maxHeight: "75vh", overflowY: "auto",
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <h3 style={{ fontSize: 16, fontWeight: 900, margin: 0 }}>{title}</h3>
           <button onClick={onClose} style={{
             width: 30, height: 30, borderRadius: "50%",
