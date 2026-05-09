@@ -560,7 +560,11 @@ export default function CategoryProductsPage() {
       {/* ════════ FLOATING CART BAR ════════ */}
       {cartCount > 0 && (
         <div style={{
-          position: "fixed", bottom: 14, left: 0, right: 0,
+          position: "fixed",
+bottom: "calc(34px + env(safe-area-inset-bottom))",
+left: 0,
+right: 0,
+
           padding: "0 12px", zIndex: 100,
           animation: "slideUp 0.3s ease",
         }}>
