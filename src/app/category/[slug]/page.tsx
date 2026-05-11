@@ -210,7 +210,7 @@ export default function CategoryProductsPage() {
 
   return (
     <main style={ui.page}>
-      <div style={{ ...ui.phone, paddingBottom: cartCount > 0 ? 140 : 24, gap: 12 }}>
+      <div style={{ ...ui.phone, paddingInline: 14, paddingBottom: cartCount > 0 ? 140 : 24, gap: 12 }}>
 
         {/* ════════ STICKY HEADER ════════ */}
         <div style={{
@@ -298,13 +298,13 @@ export default function CategoryProductsPage() {
         </div>
 
         {/* ════════ BREADCRUMB + COUNT ════════ */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: theme.gray[600], fontWeight: 700 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minWidth: 0, padding: "0 4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, fontSize: 11, color: theme.gray[600], fontWeight: 700 }}>
             <Link href="/" style={{ color: theme.gray[600], textDecoration: "none" }}>Home</Link>
             <ChevronRight size={12} />
-            <span style={{ color: theme.primary[600] }}>{categoryName}</span>
+            <span style={{ color: theme.primary[600], minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{categoryName}</span>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: theme.gray[700] }}>
+          <div style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, color: theme.gray[700], whiteSpace: "nowrap" }}>
             <Package size={11} style={{ display: "inline", marginRight: 4, verticalAlign: -1 }} />
             {isCategoryOverview ? `${SERVICE_CATEGORIES.length + categories.length} categories` : `${visibleProducts.length} items`}
           </div>
@@ -590,18 +590,21 @@ bottom: "calc(34px + env(safe-area-inset-bottom))",
 left: 0,
 right: 0,
 
-          padding: "0 12px", zIndex: 100,
+          boxSizing: "border-box",
+          padding: "0 14px", zIndex: 100,
           animation: "slideUp 0.3s ease",
         }}>
-          <div style={{ maxWidth: 430, margin: "0 auto" }}>
+          <div style={{ width: "100%", maxWidth: 430, margin: "0 auto", boxSizing: "border-box" }}>
             <Link href="/cart" style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               background: theme.primary.gradient, color: "#fff",
               padding: "12px 18px", borderRadius: 16,
               boxShadow: "0 16px 40px rgba(5,150,105,0.45)",
               textDecoration: "none",
+              minWidth: 0,
+              boxSizing: "border-box",
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                 <div style={{
                   width: 38, height: 38, borderRadius: 10,
                   background: "rgba(255,255,255,0.2)",
@@ -625,7 +628,7 @@ right: 0,
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 900, fontSize: 13 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, fontWeight: 900, fontSize: 13 }}>
                 View Cart <ChevronRight size={16} />
               </div>
             </Link>
@@ -653,20 +656,24 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
   ];
 
   return (
-    <div style={{ display: "grid", gap: 14 }}>
+    <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
       <div style={{
         background: "linear-gradient(135deg, #eff6ff, #f8fafc)",
         border: "1px solid #dbeafe",
         borderRadius: 18,
         padding: 14,
         boxShadow: theme.shadow.sm,
+        minWidth: 0,
+        overflow: "hidden",
+        boxSizing: "border-box",
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, minWidth: 0, marginBottom: 10 }}>
+          <div style={{ minWidth: 0 }}>
             <h2 style={{ fontSize: 16, fontWeight: 900, color: "#1e3a8a", margin: 0 }}>🔧 Home Services</h2>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", margin: "3px 0 0" }}>Quick help for home needs</p>
           </div>
           <span style={{
+            flexShrink: 0,
             fontSize: 9,
             fontWeight: 900,
             color: "#fff",
@@ -676,10 +683,13 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
           }}>SERVICES</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
           {SERVICE_CATEGORIES.map((service) => (
             <Link key={service.name} href={service.href} style={{
               minHeight: 74,
+              minWidth: 0,
+              boxSizing: "border-box",
+              overflow: "hidden",
               borderRadius: 14,
               padding: 10,
               background: service.bg,
@@ -702,8 +712,8 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
                 flexShrink: 0,
               }}>{service.emoji}</span>
               <span style={{ minWidth: 0 }}>
-                <strong style={{ display: "block", fontSize: 12, lineHeight: 1.15 }}>{service.name}</strong>
-                <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, opacity: 0.78, marginTop: 2 }}>{service.desc}</span>
+                <strong style={{ display: "block", fontSize: 12, lineHeight: 1.15, overflowWrap: "anywhere" }}>{service.name}</strong>
+                <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, lineHeight: 1.15, opacity: 0.78, marginTop: 2, overflowWrap: "anywhere" }}>{service.desc}</span>
               </span>
             </Link>
           ))}
@@ -716,13 +726,17 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
         borderRadius: 18,
         padding: 14,
         boxShadow: theme.shadow.sm,
+        minWidth: 0,
+        overflow: "hidden",
+        boxSizing: "border-box",
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, minWidth: 0, marginBottom: 10 }}>
+          <div style={{ minWidth: 0 }}>
             <h2 style={{ fontSize: 16, fontWeight: 900, color: "#064e3b", margin: 0 }}>🛒 Shop Groceries</h2>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#047857", margin: "3px 0 0" }}>Fresh daily essentials</p>
           </div>
           <span style={{
+            flexShrink: 0,
             fontSize: 9,
             fontWeight: 900,
             color: "#fff",
@@ -732,12 +746,15 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
           }}>{categories.length} TYPES</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
           {categories.map((category, idx) => {
             const c = groceryPalette[idx % groceryPalette.length];
             return (
               <Link key={category.id} href={getCategoryHref(category)} style={{
                 minHeight: 118,
+                minWidth: 0,
+                boxSizing: "border-box",
+                overflow: "hidden",
                 borderRadius: 14,
                 padding: "8px 6px",
                 background: c.bg,
@@ -762,7 +779,7 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
                   fontSize: 30,
                 }}>
                   {category.image ? (
-                    <img src={category.image} alt={category.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={category.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : c.emoji}
                 </span>
                 <strong style={{

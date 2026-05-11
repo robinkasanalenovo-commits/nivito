@@ -500,14 +500,19 @@ const styles: Record<string, CSSProperties> = {
     background: "linear-gradient(180deg, #fef3c7 0%, #fed7aa 50%, #fef3c7 100%)",
     padding: "16px 0 100px",
     fontFamily: "system-ui, -apple-system, sans-serif",
+    overflowX: "hidden",
   },
   phone: {
+    width: "100%",
     maxWidth: 420,
+    minWidth: 0,
     margin: "0 auto",
-    padding: "0 12px",
+    padding: "0 14px",
+    boxSizing: "border-box",
     display: "grid",
     gap: 14,
     position: "relative",
+    overflowX: "hidden",
   },
   header: { position: "relative", paddingTop: 4 },
   headerGlowOne: { position: "absolute", width: 80, height: 80, background: "rgba(16,185,129,0.15)", borderRadius: "50%", top: -20, left: -20, filter: "blur(30px)" },
@@ -533,6 +538,9 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 18, padding: 14, color: "#fff",
     display: "flex", alignItems: "center", gap: 12,
     boxShadow: "0 8px 20px rgba(16,185,129,0.25)",
+    minWidth: 0,
+    boxSizing: "border-box",
+    overflow: "hidden",
   },
   avatarBox: {},
   avatar: {
@@ -542,17 +550,19 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 22, fontWeight: 700,
   },
   hello: { fontSize: 16, fontWeight: 700, margin: 0, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  subText: { fontSize: 12, margin: "2px 0 0", color: "rgba(255,255,255,0.9)" },
+  subText: { fontSize: 12, lineHeight: 1.35, margin: "2px 0 0", color: "rgba(255,255,255,0.9)", overflowWrap: "anywhere" },
   loginBtn: {
     background: "#fff", color: "#059669", border: "none",
-    padding: "8px 14px", borderRadius: 8, fontWeight: 700, fontSize: 13,
-    cursor: "pointer", whiteSpace: "nowrap",
+    padding: "8px 12px", borderRadius: 8, fontWeight: 700, fontSize: 13,
+    cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
   },
 
   statsCard: {
     background: "#fff", borderRadius: 16, border: "1px solid #e5e7eb",
     boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
     display: "grid", gridTemplateColumns: "1fr 1fr 1fr", overflow: "hidden",
+    minWidth: 0,
+    boxSizing: "border-box",
   },
   statButton: {
     background: "transparent", border: "none", padding: 0,
@@ -566,17 +576,19 @@ const styles: Record<string, CSSProperties> = {
   menuCard: {
     background: "#fff", borderRadius: 16, border: "1px solid #e5e7eb",
     boxShadow: "0 2px 8px rgba(0,0,0,0.04)", overflow: "hidden",
+    minWidth: 0,
+    boxSizing: "border-box",
   },
   menuRow: {
     width: "100%", display: "flex", alignItems: "center", gap: 12,
     padding: "12px 14px", border: "none", borderBottom: "1px solid #f3f4f6",
-    background: "#fff", cursor: "pointer", textAlign: "left",
+    background: "#fff", cursor: "pointer", textAlign: "left", minWidth: 0, boxSizing: "border-box",
   },
   menuIcon: {
     width: 36, height: 36, borderRadius: 10, background: "#f9fafb",
     display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
   },
-  menuTitle: { flex: 1, fontSize: 14, fontWeight: 600, color: "#111" },
+  menuTitle: { flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   menuBadge: {
     background: "#fce7f3", color: "#be185d",
     padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700,
@@ -639,6 +651,7 @@ const styles: Record<string, CSSProperties> = {
   bottomNav: {
     position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
     width: "100%", maxWidth: 420,
+    boxSizing: "border-box",
     background: "#fff", borderTop: "1px solid #e5e7eb",
     display: "flex", justifyContent: "space-around", padding: "8px 0", zIndex: 40,
   },
