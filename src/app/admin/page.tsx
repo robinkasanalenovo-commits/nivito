@@ -267,6 +267,12 @@ export default function AdminPage() {
   const [variantForms, setVariantForms] = useState<
     Record<number, { weight: string; sellingPrice: string; stock: string; active: boolean }>
   >({});
+  const [editProductForms, setEditProductForms] = useState<
+    Record<number, { name: string; image: string; category: string; active: boolean }>
+  >({});
+  const [editVariantForms, setEditVariantForms] = useState<
+    Record<number, Record<number, { weight: string; sellingPrice: string; stock: string; active: boolean }>>
+  >({});
 
   const [productSearch, setProductSearch] = useState("");
   const [productCategoryFilter, setProductCategoryFilter] = useState("All");
@@ -912,6 +918,129 @@ setCustomers(customerData.customers || []);
           : product
       ),
     });
+  };
+
+  const moveProductUp = async (id: number) => {
+    const index = products.findIndex((item) => item.id === id);
+    if (index <= 0) return;
+
+    const updated = [...products];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+
+    await saveData({
+      banners,
+      categories,
+      products: updated,
+    });
+  };
+
+  const moveProductDown = async (id: number) => {
+    const index = products.findIndex((item) => item.id === id);
+    if (index === -1 || index >= products.length - 1) return;
+
+    const updated = [...products];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+
+    await saveData({
+      banners,
+      categories,
+      products: updated,
+    });
+  };
+
+  const saveProductEdits = async (product: ProductType) => {
+    const form =
+      editProductForms[product.id] || {
+        name: product.name,
+        image: product.image,
+        category: product.category,
+        active: product.active,
+      };
+
+    if (!form.name.trim()) {
+      alert("Product name daalo");
+      return;
+    }
+
+    const updatedProducts = products.map((item) =>
+      item.id === product.id
+        ? {
+            ...item,
+            name: form.name.trim(),
+            image: form.image.trim(),
+            category: form.category || "General",
+            active: form.active,
+          }
+        : item
+    );
+
+    await saveData({
+      banners,
+      categories,
+      products: updatedProducts,
+    });
+
+    setEditProductForms((prev) => {
+      const next = { ...prev };
+      delete next[product.id];
+      return next;
+    });
+
+    alert("Product update ho gaya");
+  };
+
+  const saveVariantEdits = async (productId: number, variant: ProductVariantType) => {
+    const form =
+      editVariantForms[productId]?.[variant.id] || {
+        weight: variant.weight,
+        sellingPrice: String(variant.sellingPrice || 0),
+        stock: String(variant.stock || 0),
+        active: variant.active,
+      };
+
+    if (!form.weight.trim()) {
+      alert("Quantity/weight daalo");
+      return;
+    }
+
+    if (Number(form.sellingPrice || 0) <= 0) {
+      alert("Selling price 0 se zyada hona chahiye");
+      return;
+    }
+
+    await saveData({
+      banners,
+      categories,
+      products: products.map((product) =>
+        product.id === productId
+          ? {
+              ...product,
+              variants: product.variants.map((item) =>
+                item.id === variant.id
+                  ? {
+                      ...item,
+                      weight: form.weight.trim(),
+                      sellingPrice: Number(form.sellingPrice || 0),
+                      stock: Number(form.stock || 0),
+                      active: form.active,
+                    }
+                  : item
+              ),
+            }
+          : product
+      ),
+    });
+
+    setEditVariantForms((prev) => {
+      const next = { ...prev };
+      if (next[productId]) {
+        next[productId] = { ...next[productId] };
+        delete next[productId][variant.id];
+      }
+      return next;
+    });
+
+    alert("Variant update ho gaya");
   };
 
   const moveCategoryUp = async (id: number) => {
@@ -2008,6 +2137,13 @@ const openWhatsAppOrder = (order: OrderType) => {
                     stock: "",
                     active: true,
                   };
+                  const productIndex = products.findIndex((item) => item.id === product.id);
+                  const editProductForm = editProductForms[product.id] || {
+                    name: product.name,
+                    image: product.image,
+                    category: product.category,
+                    active: product.active,
+                  };
 
                   return (
                     <div
@@ -2090,35 +2226,139 @@ const openWhatsAppOrder = (order: OrderType) => {
                           </p>
                         </div>
 
-                        <div className="flex shrink-0 flex-col gap-1.5">
+                        <div className="grid shrink-0 grid-cols-2 gap-1.5 md:flex md:flex-col">
+                          <button
+                            onClick={() => moveProductUp(product.id)}
+                            disabled={productIndex <= 0}
+                            className={`flex h-8 w-12 items-center justify-center rounded-lg text-[10px] font-black active:scale-95 ${
+                              productIndex <= 0
+                                ? "bg-gray-100 text-gray-400"
+                                : "bg-blue-50 text-blue-700 ring-1 ring-blue-100"
+                            }`}
+                            title="Move up"
+                          >
+                            Up
+                          </button>
+
+                          <button
+                            onClick={() => moveProductDown(product.id)}
+                            disabled={productIndex === -1 || productIndex >= products.length - 1}
+                            className={`flex h-8 w-12 items-center justify-center rounded-lg text-[10px] font-black active:scale-95 ${
+                              productIndex === -1 || productIndex >= products.length - 1
+                                ? "bg-gray-100 text-gray-400"
+                                : "bg-blue-50 text-blue-700 ring-1 ring-blue-100"
+                            }`}
+                            title="Move down"
+                          >
+                            Down
+                          </button>
+
                           <button
                             onClick={() => setOpenProductId(isOpen ? null : product.id)}
-className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-blue-500 bg-blue-100 text-2xl font-black text-blue-700 no-underline"                          >
-                            ▤
+                            className="col-span-2 flex h-10 w-full items-center justify-center rounded-xl border-2 border-blue-500 bg-blue-100 px-3 text-xs font-black text-blue-700 no-underline md:w-12"
+                          >
+                            Edit
                           </button>
 
                           <button
                             onClick={() => toggleProduct(product.id)}
-className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-black no-underline active:scale-95 md:h-9 md:w-9 ${                              product.active
+                            className={`flex h-8 w-12 items-center justify-center rounded-lg border text-[10px] font-black no-underline active:scale-95 ${
+                              product.active
                                 ? "border-yellow-300 bg-yellow-50 text-yellow-700"
                                 : "border-green-300 bg-green-50 text-green-700"
                             }`}
                             title={product.active ? "Hide" : "Show"}
                           >
-                            {product.active ? "👁" : "✓"}
+                            {product.active ? "Hide" : "Show"}
                           </button>
 
                           <button
                             onClick={() => deleteProduct(product.id)}
-                            className="flex h-8 w-8 items-center justify-center  bg-red-50 text-xs font-black text-red-600 active:scale-95 md:h-9 md:w-9"
+                            className="flex h-8 w-12 items-center justify-center rounded-lg bg-red-50 text-[10px] font-black text-red-600 active:scale-95"
                             title="Delete"
                           >
-                            🗑
+                            Delete
                           </button>
                         </div>
                       </div>
 {isOpen && (
   <div className="border-t border-gray-100 bg-gray-50 p-3">
+    <div className="mb-3 rounded-2xl bg-white p-3 ring-1 ring-gray-200">
+      <h4 className="text-sm font-extrabold text-gray-900">Edit Product Details</h4>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-4">
+        <input
+          value={editProductForm.name}
+          onChange={(e) =>
+            setEditProductForms({
+              ...editProductForms,
+              [product.id]: { ...editProductForm, name: e.target.value },
+            })
+          }
+          placeholder="Product name"
+          className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+        />
+
+        <input
+          value={editProductForm.image}
+          onChange={(e) =>
+            setEditProductForms({
+              ...editProductForms,
+              [product.id]: { ...editProductForm, image: e.target.value },
+            })
+          }
+          placeholder="Product image URL"
+          className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+        />
+
+        <select
+          value={editProductForm.category}
+          onChange={(e) =>
+            setEditProductForms({
+              ...editProductForms,
+              [product.id]: { ...editProductForm, category: e.target.value },
+            })
+          }
+          className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+        >
+          <option value="">Select Category</option>
+          {categories.map((item) => (
+            <option key={item.id} value={item.name}>
+              {item.name}
+            </option>
+          ))}
+          <option value="General">General</option>
+        </select>
+
+        <label className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-700">
+          <input
+            type="checkbox"
+            checked={editProductForm.active}
+            onChange={(e) =>
+              setEditProductForms({
+                ...editProductForms,
+                [product.id]: { ...editProductForm, active: e.target.checked },
+              })
+            }
+          />
+          Active
+        </label>
+      </div>
+
+      <button
+        onClick={() => saveProductEdits(product)}
+        className="mt-3 rounded-xl bg-green-600 px-5 py-2 text-sm font-extrabold text-white shadow-md active:scale-95"
+      >
+        Save Product Changes
+      </button>
+    </div>
+
+    <div className="mb-3 rounded-2xl bg-white p-3 ring-1 ring-gray-200">
+      <h4 className="text-sm font-extrabold text-gray-900">Add New Variant</h4>
+      <p className="mt-1 text-xs font-semibold text-gray-500">
+        Quantity/weight, price, aur stock add karo.
+      </p>
+    </div>
     <div className="grid gap-3 md:grid-cols-4">
       <select
         value={form.weight}
@@ -2172,37 +2412,110 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
     </div>
 
     <div className="mt-3 grid gap-2">
-      {(product.variants || []).map((variant) => (
-        <div
-          key={variant.id}
-          className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 ring-1 ring-gray-200"
-        >
-          <div>
-            <h4 className="text-sm font-extrabold text-gray-900">
-              {variant.weight} · ₹{variant.sellingPrice}
-            </h4>
-            <p className="text-xs font-semibold text-gray-500">
-              Stock: {variant.stock} · {variant.active ? "Active" : "Hidden"}
-            </p>
-          </div>
+      {(product.variants || []).map((variant) => {
+        const editVariantForm = editVariantForms[product.id]?.[variant.id] || {
+          weight: variant.weight,
+          sellingPrice: String(variant.sellingPrice || 0),
+          stock: String(variant.stock || 0),
+          active: variant.active,
+        };
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => toggleVariant(product.id, variant.id)}
-              className="rounded-full bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-700"
-            >
-              {variant.active ? "Hide" : "Show"}
-            </button>
+        return (
+          <div
+            key={variant.id}
+            className="rounded-xl bg-white p-3 ring-1 ring-gray-200"
+          >
+            <div className="grid gap-2 md:grid-cols-[1fr_120px_120px_110px_auto] md:items-center">
+              <input
+                value={editVariantForm.weight}
+                onChange={(e) =>
+                  setEditVariantForms({
+                    ...editVariantForms,
+                    [product.id]: {
+                      ...(editVariantForms[product.id] || {}),
+                      [variant.id]: { ...editVariantForm, weight: e.target.value },
+                    },
+                  })
+                }
+                placeholder="Quantity / Weight"
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+              />
 
-            <button
-              onClick={() => deleteVariant(product.id, variant.id)}
-              className="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700"
-            >
-              Delete
-            </button>
+              <input
+                type="number"
+                value={editVariantForm.sellingPrice}
+                onChange={(e) =>
+                  setEditVariantForms({
+                    ...editVariantForms,
+                    [product.id]: {
+                      ...(editVariantForms[product.id] || {}),
+                      [variant.id]: { ...editVariantForm, sellingPrice: e.target.value },
+                    },
+                  })
+                }
+                placeholder="Price"
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+              />
+
+              <input
+                type="number"
+                value={editVariantForm.stock}
+                onChange={(e) =>
+                  setEditVariantForms({
+                    ...editVariantForms,
+                    [product.id]: {
+                      ...(editVariantForms[product.id] || {}),
+                      [variant.id]: { ...editVariantForm, stock: e.target.value },
+                    },
+                  })
+                }
+                placeholder="Stock"
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+              />
+
+              <label className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={editVariantForm.active}
+                  onChange={(e) =>
+                    setEditVariantForms({
+                      ...editVariantForms,
+                      [product.id]: {
+                        ...(editVariantForms[product.id] || {}),
+                        [variant.id]: { ...editVariantForm, active: e.target.checked },
+                      },
+                    })
+                  }
+                />
+                Active
+              </label>
+
+              <div className="grid grid-cols-3 gap-2 md:flex">
+                <button
+                  onClick={() => saveVariantEdits(product.id, variant)}
+                  className="rounded-xl bg-green-600 px-3 py-2 text-xs font-extrabold text-white active:scale-95"
+                >
+                  Save
+                </button>
+
+                <button
+                  onClick={() => toggleVariant(product.id, variant.id)}
+                  className="rounded-xl bg-yellow-100 px-3 py-2 text-xs font-bold text-yellow-700 active:scale-95"
+                >
+                  {variant.active ? "Hide" : "Show"}
+                </button>
+
+                <button
+                  onClick={() => deleteVariant(product.id, variant.id)}
+                  className="rounded-xl bg-red-100 px-3 py-2 text-xs font-bold text-red-700 active:scale-95"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </div>
 )}
