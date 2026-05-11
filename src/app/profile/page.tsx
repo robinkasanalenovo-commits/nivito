@@ -14,6 +14,16 @@ type Order = {
   createdAt: string;
 };
 type LoginUserType = { id: number; full_name: string; mobile_number: string; created_at?: string };
+type CouponType = {
+  id: number;
+  code: string;
+  type: "flat" | "percent";
+  value: number;
+  minOrder: number;
+  maxDiscount?: number;
+  label: string;
+  active: boolean;
+};
 type SavedAddress = {
   id: number; title: string; name: string; mobile: string;
   address: string; city: string; pincode: string; landmark: string; isDefault: boolean;
@@ -31,6 +41,7 @@ const defaultAddress: SavedAddress = {
 export default function ProfilePage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [availableCoupons, setAvailableCoupons] = useState<CouponType[]>([]);
   const [referralCode, setReferralCode] = useState("NIVITO-000000");
   const [loginUser, setLoginUser] = useState<LoginUserType | null>(null);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
@@ -99,7 +110,15 @@ export default function ProfilePage() {
         const res = await fetch("/api/admin-data", { cache: "no-store" });
         const data = await res.json();
         setOrders((data.orders || []).slice(0, 8));
-      } catch { setOrders([]); }
+        setAvailableCoupons(
+          Array.isArray(data.coupons)
+            ? data.coupons.filter((coupon: CouponType) => coupon.active)
+            : []
+        );
+      } catch {
+        setOrders([]);
+        setAvailableCoupons([]);
+      }
     };
     load();
   }, []);
@@ -215,7 +234,7 @@ export default function ProfilePage() {
             <StatBox icon="🎁" value={0} label="Rewards" border />
           </button>
           <button onClick={() => setActiveModal("coupons")} style={styles.statButton}>
-            <StatBox icon="🏷️" value={0} label="Coupons" />
+            <StatBox icon="🏷️" value={availableCoupons.length} label="Coupons" />
           </button>
         </section>
 
@@ -346,6 +365,33 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {activeModal === "coupons" && (
+              <div style={{ display: "grid", gap: 10 }}>
+                {availableCoupons.length === 0 ? (
+                  <div style={styles.modalEmpty}>
+                    <div style={{ fontSize: 42 }}>???</div>
+                    <h3 style={styles.modalEmptyTitle}>Abhi koi coupon nahi hai</h3>
+                    <p style={styles.modalText}>Naye offers aayenge to yahan dikhenge.</p>
+                  </div>
+                ) : (
+                  availableCoupons.map((coupon) => (
+                    <div key={coupon.id} style={styles.couponCard}>
+                      <div>
+                        <p style={styles.couponCode}>{coupon.code}</p>
+                        <p style={styles.couponLabel}>{coupon.label}</p>
+                        <p style={styles.couponMeta}>
+                          Min order Rs {coupon.minOrder || 0}
+                          {coupon.maxDiscount ? ` | Max Rs ${coupon.maxDiscount}` : ""}
+                        </p>
+                      </div>
+                      <Link href="/cart" style={styles.useCouponBtn}>
+                        Use
+                      </Link>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
             {activeModal === "settings" && (
               <div style={{ display: "grid", gap: 12 }}>
                 <div style={styles.settingsRow}>
@@ -365,10 +411,10 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {(activeModal === "rewards" || activeModal === "coupons" || activeModal === "premium" || activeModal === "privacy") && (
+            {(activeModal === "rewards" || activeModal === "premium" || activeModal === "privacy") && (
               <div style={styles.modalEmpty}>
                 <div style={{ fontSize: 42 }}>
-                  {activeModal === "premium" ? "👑" : activeModal === "coupons" ? "🏷️" : "🎁"}
+                  {activeModal === "premium" ? "Premium" : "Rewards"}
                 </div>
                 <h3 style={styles.modalEmptyTitle}>
                   {activeModal === "premium" ? "Premium aane wala hai!" : "Jaldi aa raha hai"}
@@ -641,6 +687,28 @@ const styles: Record<string, CSSProperties> = {
   orderStatus: {
     fontSize: 10, background: "#f3f4f6", color: "#374151",
     padding: "2px 8px", borderRadius: 999, marginTop: 4, display: "inline-block",
+  },
+  couponCard: {
+    border: "1px solid #d1fae5",
+    borderRadius: 14,
+    padding: 12,
+    background: "#ecfdf5",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  couponCode: { margin: 0, fontSize: 16, fontWeight: 900, color: "#065f46" },
+  couponLabel: { margin: "3px 0 0", fontSize: 13, fontWeight: 700, color: "#111827" },
+  couponMeta: { margin: "3px 0 0", fontSize: 11, fontWeight: 600, color: "#047857" },
+  useCouponBtn: {
+    background: "#10b981",
+    color: "#fff",
+    borderRadius: 10,
+    padding: "8px 14px",
+    fontSize: 12,
+    fontWeight: 800,
+    textDecoration: "none",
   },
 
   fieldLabel: { fontSize: 11, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 4 },
