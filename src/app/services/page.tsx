@@ -166,7 +166,7 @@ function ServicesPageContent() {
 
   return (
     <main style={ui.page}>
-      <div style={{ ...ui.phone, gap: 14, paddingBottom: 24 }}>
+      <div style={{ ...ui.phone, gap: 14, paddingInline: 14, paddingBottom: 24 }}>
         <div style={ui.topBar}>
           <Link href="/category/all" style={ui.iconBtn}><ArrowLeft size={20} /></Link>
           <div style={{ textAlign: "center" }}>
@@ -186,13 +186,15 @@ function ServicesPageContent() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 800, opacity: 0.9 }}>
             <Sparkles size={13} /> SERVICES
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, margin: "8px 0 4px" }}>Book help for your home</h1>
-          <p style={{ fontSize: 13, fontWeight: 600, margin: 0, opacity: 0.9 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.15, margin: "8px 0 4px" }}>
+            Book help for your home
+          </h1>
+          <p style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.35, margin: 0, opacity: 0.9 }}>
             Select a service, choose the problem, and our team will call you soon.
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, width: "100%" }}>
           {SERVICES.map((service) => {
             const active = selectedService === service.name;
             return (
@@ -202,6 +204,9 @@ function ServicesPageContent() {
                 onClick={() => setSelectedService(service.name)}
                 style={{
                   minHeight: 104,
+                  minWidth: 0,
+                  boxSizing: "border-box",
+                  overflow: "hidden",
                   borderRadius: 16,
                   padding: 12,
                   background: service.bg,
@@ -228,9 +233,13 @@ function ServicesPageContent() {
                   }}>{service.emoji}</span>
                   {active && <CheckCircle2 size={18} color={theme.primary[700]} />}
                 </div>
-                <span>
-                  <strong style={{ display: "block", fontSize: 13 }}>{service.name}</strong>
-                  <small style={{ fontSize: 10.5, fontWeight: 700, opacity: 0.78 }}>{service.desc}</small>
+                <span style={{ minWidth: 0 }}>
+                  <strong style={{ display: "block", fontSize: 13, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    {service.name}
+                  </strong>
+                  <small style={{ display: "block", fontSize: 10.5, fontWeight: 700, lineHeight: 1.2, opacity: 0.78, overflowWrap: "anywhere" }}>
+                    {service.desc}
+                  </small>
                 </span>
               </button>
             );
@@ -245,7 +254,7 @@ function ServicesPageContent() {
               <div style={{ fontSize: 12, fontWeight: 900, color: theme.gray[700], marginBottom: 8 }}>
                 Select problem
               </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
                 {currentProblemOptions.map((option) => {
                   const active = selectedProblem === option;
                   return (
@@ -261,6 +270,9 @@ function ServicesPageContent() {
                         color: active ? theme.primary[700] : theme.gray[700],
                         fontSize: 11,
                         fontWeight: 900,
+                        lineHeight: 1.2,
+                        maxWidth: "100%",
+                        overflowWrap: "anywhere",
                         cursor: "pointer",
                       }}
                     >

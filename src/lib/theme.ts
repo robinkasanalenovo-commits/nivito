@@ -82,15 +82,23 @@ export const ui = {
     background: theme.bg.page,
     padding: "16px 0 100px",
     fontFamily: theme.font.family,
+    overflowX: "hidden",
   } as React.CSSProperties,
 
   phone: {
-    maxWidth: 430, margin: "0 auto", padding: "0 12px",
+    width: "100%",
+    maxWidth: 430,
+    minWidth: 0,
+    margin: "0 auto",
+    padding: "0 12px",
+    boxSizing: "border-box",
     display: "grid", gap: 14, position: "relative",
+    overflowX: "hidden",
   } as React.CSSProperties,
 
   topBar: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
+    minWidth: 0,
   } as React.CSSProperties,
 
   iconBtn: {
@@ -114,11 +122,16 @@ export const ui = {
     borderRadius: theme.radius.lg,
     border: `1px solid ${theme.gray[200]}`,
     boxShadow: theme.shadow.sm,
+    width: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
     overflow: "hidden",
   } as React.CSSProperties,
 
   btnPrimary: {
     width: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
     background: theme.primary.gradient,
     color: "#fff",
     padding: "14px 18px",
