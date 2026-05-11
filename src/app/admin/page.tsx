@@ -140,7 +140,7 @@ type UnitType = "weight" | "pcs";
 type AutoVariantKey = "100g" | "250g" | "500g" | "1kg" | "2kg" | "5kg" | "1pc" | "2pc" | "3pc"| "4pc" | "5pc" | "6pc"| "7pc" | "8pc" | "9pc"| "10pc" | "11pc" | "12pc";
 type PriceMode = "auto" | "manual";
 
-const tabs = ["Dashboard", "Areas", "Categories", "Products", "Coupons", "Orders", "Service Requests", "Customers", "Settings"];
+const tabs = ["Dashboard", "Areas", "Categories", "Products", "Orders", "Service Requests", "Customers", "Settings"];
 
 const defaultServiceOptions: ServiceOptionConfigType[] = [
   { serviceName: "AC Service", options: ["AC Service", "Gas Filling", "Cooling Problem", "Installation"] },
@@ -2376,11 +2376,9 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
                 ))}
               </div>
             </div>
-          </section>
-        )}
 
-        {activeTab === "Coupons" && (
-  <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+
+<div className="mt-6 rounded-[22px] bg-gray-50 p-4 ring-1 ring-black/5">
     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <div>
         <h2 className="text-xl font-extrabold">Coupons Management</h2>
@@ -2519,8 +2517,9 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
         ))
       )}
     </div>
-  </section>
-)}
+  </div>
+          </section>
+        )}
 
         {activeTab === "Orders" && (
   <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
