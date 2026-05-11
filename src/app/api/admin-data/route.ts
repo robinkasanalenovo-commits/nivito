@@ -31,48 +31,7 @@ const defaultServiceOptions = [
   },
 ];
 
-const defaultCoupons = [
-  {
-    id: 1,
-    code: "WELCOME50",
-    type: "flat",
-    value: 50,
-    minOrder: 199,
-    maxDiscount: 0,
-    label: "Rs 50 off",
-    active: true,
-  },
-  {
-    id: 2,
-    code: "NIVITO10",
-    type: "percent",
-    value: 10,
-    minOrder: 299,
-    maxDiscount: 100,
-    label: "10% off max Rs 100",
-    active: true,
-  },
-  {
-    id: 3,
-    code: "FRESH20",
-    type: "percent",
-    value: 20,
-    minOrder: 499,
-    maxDiscount: 150,
-    label: "20% off max Rs 150",
-    active: true,
-  },
-  {
-    id: 4,
-    code: "FIRST100",
-    type: "flat",
-    value: 100,
-    minOrder: 599,
-    maxDiscount: 0,
-    label: "Rs 100 off",
-    active: true,
-  },
-];
+const defaultCoupons: any[] = [];
 
 const defaultCategories = [
   { id: 1, name: "Vegetables", image: "", link: "/category/vegetables", active: true, order: 1 },
@@ -127,10 +86,7 @@ function normalizeData(data: any) {
       Array.isArray(data?.serviceOptions) && data.serviceOptions.length > 0
         ? data.serviceOptions
         : defaultServiceOptions,
-    coupons:
-      Array.isArray(data?.coupons) && data.coupons.length > 0
-        ? data.coupons
-        : defaultCoupons,
+    coupons: Array.isArray(data?.coupons) ? data.coupons : defaultCoupons,
     customers: data?.customers || [],
     referrals: data?.referrals || [],
     areas:

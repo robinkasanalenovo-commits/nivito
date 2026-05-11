@@ -176,12 +176,7 @@ const defaultNotificationSettings: NotificationSettingsType = {
   updatedAt: 0,
 };
 
-const defaultCoupons: CouponType[] = [
-  { id: 1, code: "WELCOME50", type: "flat", value: 50, minOrder: 199, maxDiscount: 0, label: "Rs 50 off", active: true },
-  { id: 2, code: "NIVITO10", type: "percent", value: 10, minOrder: 299, maxDiscount: 100, label: "10% off max Rs 100", active: true },
-  { id: 3, code: "FRESH20", type: "percent", value: 20, minOrder: 499, maxDiscount: 150, label: "20% off max Rs 150", active: true },
-  { id: 4, code: "FIRST100", type: "flat", value: 100, minOrder: 599, maxDiscount: 0, label: "Rs 100 off", active: true },
-];
+const defaultCoupons: CouponType[] = [];
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -345,11 +340,7 @@ export default function AdminPage() {
         ? data.serviceOptions
         : defaultServiceOptions
     );
-    setCoupons(
-      Array.isArray(data.coupons) && data.coupons.length > 0
-        ? data.coupons
-        : defaultCoupons
-    );
+    setCoupons(Array.isArray(data.coupons) ? data.coupons : defaultCoupons);
     const customerRes = await fetch("/api/customers", {
   cache: "no-store",
 });

@@ -25,13 +25,6 @@ type AdminCoupon = Partial<CouponConfig> & {
   code?: string;
 };
 
-const FALLBACK_COUPONS: Record<string, CouponConfig> = {
-  WELCOME50: { type: "flat", value: 50, minOrder: 199, label: "₹50 off" },
-  NIVITO10: { type: "percent", value: 10, minOrder: 299, maxDiscount: 100, label: "10% off (max ₹100)" },
-  FRESH20: { type: "percent", value: 20, minOrder: 499, maxDiscount: 150, label: "20% off (max ₹150)" },
-  FIRST100: { type: "flat", value: 100, minOrder: 599, label: "₹100 off" },
-};
-
 type AppliedCoupon = { code: string; discount: number; message: string };
 
 export default function CartPage() {
@@ -176,24 +169,14 @@ export default function CartPage() {
           return;
         }
 
-        if (adminCoupons.length > 0) {
-          setCouponError("Yeh coupon valid nahi hai");
-          setCheckingCoupon(false);
-          return;
-        }
+        setCouponError("Yeh coupon valid nahi hai");
+        setCheckingCoupon(false);
+        return;
       }
-    } catch {}
-
-    const c = FALLBACK_COUPONS[code];
-
-    if (!c) {
+    } catch {
       setCouponError("Yeh coupon valid nahi hai");
       setCheckingCoupon(false);
-      return;
     }
-
-    applyCouponConfig(code, c);
-    setCheckingCoupon(false);
   };
   const removeCoupon = () => {
     setAppliedCoupon(null);
@@ -738,26 +721,7 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
               </div>
             )}
 
-            <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {Object.entries(FALLBACK_COUPONS).slice(0, 3).map(([code, c]) => (
-                <button
-                  key={code}
-                  onClick={() => setCoupon(code)}
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: theme.accent[700],
-                    background: theme.accent[50],
-                    border: `1px dashed ${theme.accent[300]}`,
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                >
-                  {code} • {c.label}
-                </button>
-              ))}
-            </div>
+
           </div>
         )}
 
