@@ -337,7 +337,7 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
       <div
   style={{
     ...ui.phone,
-   padding: "0 16px 150px",
+   padding: "0 16px 210px",
   }}
 >
         <div style={ui.topBar}>
@@ -816,11 +816,12 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
   <div style={{
   position: "fixed",
   left: "50%",
-  bottom: "calc(18px + env(safe-area-inset-bottom))",
+  bottom: "calc(72px + env(safe-area-inset-bottom))",
   transform: "translateX(-50%)",
   width: "100%",
-  maxWidth: 520,
-  padding: "0 12px",
+  maxWidth: 430,
+  padding: "0 16px",
+  boxSizing: "border-box",
   background: "transparent",
   zIndex: 50,
 }}>
