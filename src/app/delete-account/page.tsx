@@ -87,7 +87,7 @@ export default function DeleteAccountPage() {
         </section>
 
         <p style={{ textAlign: "center", fontSize: 12, color: "#6b7280" }}>
-          Help chahiye? Call <strong>9999878381</strong>
+          Help chahiye? Call <strong>9873513566</strong>
         </p>
       </div>
     </main>

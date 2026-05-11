@@ -2968,7 +2968,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                         <h2 className="text-3xl font-black text-green-700">NIVITO</h2>
                         <p className="text-sm font-bold text-gray-500">Fresh Groceries & Home Services</p>
                         <p className="text-sm font-bold text-gray-500">Website: nivito.in</p>
-                        <p className="text-sm font-bold text-gray-500">Support: 9999878381</p>
+                        <p className="text-sm font-bold text-gray-500">Support: 9873513566</p>
                       </div>
 
                       <div className="text-right">

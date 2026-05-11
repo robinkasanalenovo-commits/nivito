@@ -170,9 +170,9 @@ export default function ProfilePage() {
     router.push("/login");
   };
 
-  const callSupport = () => { window.location.href = "tel:+919999878381"; };
+  const callSupport = () => { window.location.href = "tel:+919873513566"; };
   const whatsappSupport = () => {
-    window.open(`https://wa.me/919999878381?text=${encodeURIComponent("Hello Nivito, mujhe help chahiye.")}`, "_blank");
+    window.open(`https://wa.me/919873513566?text=${encodeURIComponent("Hello Nivito, mujhe help chahiye.")}`, "_blank");
   };
 
   const toggleNotification = () => {
