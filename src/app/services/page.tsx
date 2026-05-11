@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense, useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, ChevronRight, Phone, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { theme, ui } from "@/lib/theme";
 
 const SERVICES = [
@@ -32,7 +32,7 @@ const NOTE_PLACEHOLDERS: Record<string, string> = {
   "Home Cleaning": "Add cleaning details, e.g. rooms, kitchen, bathroom, or preferred time",
 };
 
-export default function ServicesPage() {
+function ServicesPageContent() {
   const searchParams = useSearchParams();
   const [selectedService, setSelectedService] = useState(SERVICES[0].name);
   const [serviceOptions, setServiceOptions] = useState<ServiceOptionConfig[]>(DEFAULT_SERVICE_OPTIONS);
@@ -54,7 +54,6 @@ export default function ServicesPage() {
       (service) => service.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") === serviceFromUrl
     );
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (matchedService) setSelectedService(matchedService.name);
   }, [searchParams]);
 
@@ -75,7 +74,6 @@ export default function ServicesPage() {
   useEffect(() => {
     const options = serviceOptions.find((service) => service.serviceName === selectedService)?.options || [];
     if (options.length > 0 && !options.includes(selectedProblem)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedProblem(options[0]);
     } else if (options.length === 0 && selectedProblem) {
       setSelectedProblem("");
@@ -93,7 +91,6 @@ export default function ServicesPage() {
 
     try {
       const user = JSON.parse(savedCustomer);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCustomerName(user.name || user.full_name || user.fullName || "");
       setCustomerMobile(user.mobile || user.mobile_number || user.mobileNumber || user.phone || "");
       setAddress(
@@ -329,5 +326,13 @@ export default function ServicesPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <Suspense fallback={null}>
+      <ServicesPageContent />
+    </Suspense>
   );
 }
