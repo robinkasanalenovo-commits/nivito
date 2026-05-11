@@ -1256,6 +1256,42 @@ const printOrderBill = (orderId: number) => {
             border-top: 1px solid #eef2f7;
           }
 
+          .invoice-product {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 260px;
+          }
+
+          .invoice-product-image {
+            width: 64px;
+            height: 64px;
+            flex: 0 0 64px;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            object-fit: cover;
+          }
+
+          .invoice-product-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            flex: 0 0 64px;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            color: #9ca3af;
+            font-size: 24px;
+          }
+
+          .invoice-product-name {
+            font-size: 17px;
+            line-height: 1.25;
+          }
+
           th:nth-child(2),
           td:nth-child(2) {
             text-align: center;
@@ -2654,7 +2690,24 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
                         <tbody>
                           {(order.items || []).map((item) => (
                             <tr key={`${order.id}-${item.id}-${item.name}`} className="border-t border-gray-100">
-                              <td className="px-3 py-3 font-bold text-gray-900">{item.name}</td>
+                              <td className="px-3 py-3 font-bold text-gray-900">
+                                <div className="invoice-product flex min-w-[220px] items-center gap-3">
+                                  {item.image ? (
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      className="invoice-product-image h-16 w-16 flex-shrink-0 rounded-2xl border border-gray-200 bg-white object-cover"
+                                    />
+                                  ) : (
+                                    <div className="invoice-product-placeholder flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 text-xl text-gray-400">
+                                      ?
+                                    </div>
+                                  )}
+                                  <span className="invoice-product-name text-base font-black leading-tight text-gray-900">
+                                    {item.name}
+                                  </span>
+                                </div>
+                              </td>
                               <td className="px-3 py-3 text-center font-bold">{item.quantity}</td>
                               <td className="px-3 py-3 text-right font-bold">₹{item.price}</td>
                               <td className="px-3 py-3 text-right font-extrabold">₹{item.total}</td>
