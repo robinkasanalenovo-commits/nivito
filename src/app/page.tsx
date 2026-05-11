@@ -84,8 +84,12 @@ export default function HomePage() {
       } catch (e) { console.log(e); }
     };
     load();
+    const t = window.setInterval(load, 3000);
     window.addEventListener("focus", load);
-    return () => window.removeEventListener("focus", load);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener("focus", load);
+    };
   }, []);
 
   useEffect(() => {

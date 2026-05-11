@@ -378,22 +378,37 @@ setCustomers(customerData.customers || []);
     coupons?: CouponType[];
     notificationSettings?: NotificationSettingsType;
   }) => {
+    const nextAreas = newData.areas ?? areas;
+    const nextOrders = newData.orders ?? orders;
+    const nextServiceRequests = newData.serviceRequests ?? serviceRequests;
+    const nextServiceOptions = newData.serviceOptions ?? serviceOptions;
+    const nextCoupons = newData.coupons ?? coupons;
+    const nextNotificationSettings =
+      newData.notificationSettings || notificationForm || defaultNotificationSettings;
+
+    setBanners(newData.banners);
+    setCategories(newData.categories);
+    setProducts(newData.products);
+    setAreas(nextAreas);
+    setOrders(nextOrders);
+    setServiceRequests(nextServiceRequests);
+    setServiceOptions(nextServiceOptions);
+    setCoupons(nextCoupons);
+    setNotificationForm(nextNotificationSettings);
+
     await fetch("/api/admin-data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...newData,
-        areas: newData.areas ?? areas,
-        orders: newData.orders ?? orders,
-        serviceRequests: newData.serviceRequests ?? serviceRequests,
-        serviceOptions: newData.serviceOptions ?? serviceOptions,
-        coupons: newData.coupons ?? coupons,
-        notificationSettings:
-          newData.notificationSettings || notificationForm || defaultNotificationSettings,
+        areas: nextAreas,
+        orders: nextOrders,
+        serviceRequests: nextServiceRequests,
+        serviceOptions: nextServiceOptions,
+        coupons: nextCoupons,
+        notificationSettings: nextNotificationSettings,
       }),
     });
-
-    loadData();
   };
 
  const saveNotificationSettings = async () => {

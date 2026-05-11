@@ -106,9 +106,9 @@ export default function CategoryProductsPage() {
   const isCategoryOverview = slug === "all";
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadProducts = async (showLoader = true) => {
       try {
-        setLoading(true);
+        if (showLoader) setLoading(true);
         const res = await fetch(`${window.location.origin}/api/admin-data`, { cache: "no-store" });
         if (!res.ok) throw new Error("Admin data API failed");
         const data: AdminDataResponse = await res.json();
@@ -151,11 +151,14 @@ export default function CategoryProductsPage() {
     };
 
     loadProducts();
-    window.addEventListener("focus", loadProducts);
-    window.addEventListener("pageshow", loadProducts);
+    const refreshProducts = () => loadProducts(false);
+    const t = window.setInterval(refreshProducts, 3000);
+    window.addEventListener("focus", refreshProducts);
+    window.addEventListener("pageshow", refreshProducts);
     return () => {
-      window.removeEventListener("focus", loadProducts);
-      window.removeEventListener("pageshow", loadProducts);
+      window.clearInterval(t);
+      window.removeEventListener("focus", refreshProducts);
+      window.removeEventListener("pageshow", refreshProducts);
     };
   }, [isCategoryOverview, slug]);
 
