@@ -2705,7 +2705,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                             value={area.minOrder || ""}
                             onChange={(e) => updateAreaMinOrder(area.id, e.target.value)}
                             placeholder="e.g. 199"
-                            className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-extrabold outline-none focus:border-emerald-600"
+                            className="mt-1 w-full rounded-xl border border-emerald-100 bg-white px-3 py-3 text-sm font-extrabold text-gray-900 placeholder:text-gray-400 outline-none focus:border-emerald-600"
                           />
                         </label>
                       </div>
@@ -2726,7 +2726,7 @@ const openWhatsAppOrder = (order: OrderType) => {
                                 value={sub.minOrder || ""}
                                 onChange={(e) => updateSubAreaMinOrder(area.id, sub.id, e.target.value)}
                                 placeholder={`Default Rs ${area.minOrder || 0}`}
-                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-extrabold outline-none focus:border-emerald-600"
+                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-extrabold text-gray-900 placeholder:text-gray-400 outline-none focus:border-emerald-600"
                               />
                             </label>
                           ))}
