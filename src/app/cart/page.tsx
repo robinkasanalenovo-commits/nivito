@@ -136,11 +136,6 @@ export default function CartPage() {
 
   const productSavings = mrpTotal - itemTotal;
   const couponDiscount = appliedCoupon?.discount || 0;
-  const deliveryFee = itemTotal >= 199 ? 0 : 25;
-  const handlingFee = itemTotal > 0 ? 4 : 0;
-  const freeDeliveryRemaining = Math.max(0, 199 - itemTotal);
-  const freeDeliveryProgress = Math.min(100, (itemTotal / 199) * 100);
-  const grandTotal = Math.max(0, itemTotal - couponDiscount + deliveryFee + handlingFee + tip);
   const normalizeName = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
   const deliveryMinimum = useMemo(() => {
     const areaName = normalizeName(customerArea);
@@ -161,7 +156,13 @@ export default function CartPage() {
 
     return Number(matchedSubArea?.minOrder || matchedArea.minOrder || 0);
   }, [customerAddress, customerArea, customerSubArea, deliveryAreas]);
+  const freeDeliveryThreshold = deliveryMinimum > 0 ? deliveryMinimum : 199;
   const minimumRemaining = Math.max(0, deliveryMinimum - itemTotal);
+  const deliveryFee = itemTotal >= freeDeliveryThreshold ? 0 : 25;
+  const handlingFee = itemTotal > 0 ? 4 : 0;
+  const freeDeliveryRemaining = Math.max(0, freeDeliveryThreshold - itemTotal);
+  const freeDeliveryProgress = Math.min(100, (itemTotal / freeDeliveryThreshold) * 100);
+  const grandTotal = Math.max(0, itemTotal - couponDiscount + deliveryFee + handlingFee + tip);
 
   const applyCoupon = async () => {
     const code = coupon.trim().toUpperCase();
