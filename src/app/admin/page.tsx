@@ -632,6 +632,17 @@ setCustomers(customerData.customers || []);
     });
   };
 
+  const saveMinimumOrderSettings = async () => {
+    await saveData({
+      banners,
+      categories,
+      areas,
+      products,
+    });
+
+    alert("Minimum delivery/order settings save ho gayi.");
+  };
+
   const addBanner = async () => {
     if (!bannerForm.image.trim()) {
       alert("Banner image URL डालो");
@@ -2656,15 +2667,15 @@ const openWhatsAppOrder = (order: OrderType) => {
               </button>
             </div>
 
-            <div className="mt-6 rounded-[22px] bg-emerald-50 p-4 ring-1 ring-emerald-100">
+            <div className="mt-6 rounded-[22px] bg-gradient-to-br from-emerald-900 via-emerald-700 to-green-600 p-4 text-white shadow-lg ring-1 ring-emerald-200">
               <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h3 className="text-lg font-extrabold text-gray-900">Area Minimum Order</h3>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <h3 className="text-lg font-extrabold text-white">Area Minimum Order</h3>
+                  <p className="mt-1 text-sm font-semibold text-emerald-50">
                     Har area ya sub area ke liye minimum cart amount set karo. Sub area amount 0 hoga to area amount use hoga.
                   </p>
                 </div>
-                <div className="rounded-full bg-white px-4 py-2 text-sm font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                <div className="rounded-full bg-white px-4 py-2 text-sm font-extrabold text-emerald-700 shadow-sm ring-1 ring-white/40">
                   {areas.length} Areas
                 </div>
               </div>
@@ -2725,6 +2736,24 @@ const openWhatsAppOrder = (order: OrderType) => {
                   ))
                 )}
               </div>
+
+              <button
+                type="button"
+                onClick={saveMinimumOrderSettings}
+                className="mt-4 w-full rounded-2xl px-6 py-4 text-base font-black shadow-lg transition active:scale-95 md:w-auto"
+                style={{
+                  background: "#16a34a",
+                  color: "#ffffff",
+                  border: "2px solid #bbf7d0",
+                  boxShadow: "0 14px 28px rgba(22, 163, 74, 0.35)",
+                }}
+              >
+                Save Minimum Order Settings
+              </button>
+
+              <p className="mt-2 text-xs font-bold text-emerald-50">
+                Amount type karte hi bhi save hota hai, aur final confirm ke liye is button ko press kar sakte ho.
+              </p>
             </div>
 
             <div className="mt-6 rounded-[22px] bg-gray-50 p-4 ring-1 ring-black/5">
