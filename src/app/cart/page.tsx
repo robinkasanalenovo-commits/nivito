@@ -27,6 +27,21 @@ type AdminCoupon = Partial<CouponConfig> & {
 
 type AppliedCoupon = { code: string; discount: number; message: string };
 
+type DeliverySubArea = {
+  id: number;
+  name: string;
+  active?: boolean;
+  minOrder?: number;
+};
+
+type DeliveryArea = {
+  id: number;
+  name: string;
+  active?: boolean;
+  minOrder?: number;
+  subAreas?: DeliverySubArea[];
+};
+
 export default function CartPage() {
   const { cart, increaseQty, decreaseQty, removeFromCart, clearCart } = useCart();
 
@@ -42,6 +57,9 @@ export default function CartPage() {
   const [customerName, setCustomerName] = useState("Customer");
   const [customerMobile, setCustomerMobile] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [customerArea, setCustomerArea] = useState("");
+  const [customerSubArea, setCustomerSubArea] = useState("");
+  const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -84,10 +102,26 @@ export default function CartPage() {
             .join(", ") ||
           "";
         setCustomerAddress(resolvedAddress);
+        setCustomerArea(user.area || user.customerArea || "");
+        setCustomerSubArea(user.sub_area || user.subArea || user.customerSubArea || "");
       } catch {
         console.log("Customer data load nahi hua");
       }
     });
+  }, []);
+
+  useEffect(() => {
+    const loadDeliveryAreas = async () => {
+      try {
+        const res = await fetch("/api/admin-data", { cache: "no-store" });
+        const data = await res.json();
+        setDeliveryAreas(Array.isArray(data.areas) ? data.areas : []);
+      } catch {
+        setDeliveryAreas([]);
+      }
+    };
+
+    loadDeliveryAreas();
   }, []);
 
   const itemTotal = useMemo(
@@ -107,6 +141,27 @@ export default function CartPage() {
   const freeDeliveryRemaining = Math.max(0, 199 - itemTotal);
   const freeDeliveryProgress = Math.min(100, (itemTotal / 199) * 100);
   const grandTotal = Math.max(0, itemTotal - couponDiscount + deliveryFee + handlingFee + tip);
+  const normalizeName = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
+  const deliveryMinimum = useMemo(() => {
+    const areaName = normalizeName(customerArea);
+    const subAreaName = normalizeName(customerSubArea);
+    const addressText = normalizeName(customerAddress);
+
+    const matchedArea = deliveryAreas.find((area) => {
+      const name = normalizeName(area.name || "");
+      return name && (name === areaName || addressText.includes(name));
+    });
+
+    if (!matchedArea) return 0;
+
+    const matchedSubArea = (matchedArea.subAreas || []).find((sub) => {
+      const name = normalizeName(sub.name || "");
+      return name && (name === subAreaName || addressText.includes(name));
+    });
+
+    return Number(matchedSubArea?.minOrder || matchedArea.minOrder || 0);
+  }, [customerAddress, customerArea, customerSubArea, deliveryAreas]);
+  const minimumRemaining = Math.max(0, deliveryMinimum - itemTotal);
 
   const applyCoupon = async () => {
     const code = coupon.trim().toUpperCase();
@@ -220,6 +275,11 @@ if (!finalCustomerMobile) {
 
 if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
   finalCustomerAddress = customerAddress || "Address not provided";
+}
+
+if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
+  alert(`Is area mein minimum order Rs ${deliveryMinimum} hai. Rs ${minimumRemaining} aur add karo.`);
+  return;
 }
 
     setPlacing(true);
@@ -425,6 +485,34 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
             <div style={{ fontSize: 20 }}>🎉</div>
             <div style={{ fontSize: 13, fontWeight: 800, color: theme.primary[700] }}>
               Yay! Aapko FREE delivery mil gayi
+            </div>
+          </div>
+        )}
+
+        {deliveryMinimum > 0 && (
+          <div style={{
+            background: minimumRemaining > 0 ? "#fff7ed" : theme.primary[50],
+            border: `1px solid ${minimumRemaining > 0 ? "#fed7aa" : theme.primary[100]}`,
+            borderRadius: 14,
+            padding: 12,
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+          }}>
+            <AlertCircle size={18} color={minimumRemaining > 0 ? "#c2410c" : theme.primary[600]} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                fontSize: 13,
+                fontWeight: 900,
+                color: minimumRemaining > 0 ? "#9a3412" : theme.primary[700],
+              }}>
+                Area minimum order Rs {deliveryMinimum}
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: theme.gray[600], marginTop: 2 }}>
+                {minimumRemaining > 0
+                  ? `Place order ke liye Rs ${minimumRemaining} aur add karo`
+                  : "Minimum order complete ho gaya"}
+              </div>
             </div>
           </div>
         )}
@@ -829,13 +917,13 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
 
           <button
             onClick={placeOrder}
-            disabled={placing}
+            disabled={placing || minimumRemaining > 0}
             style={{
               ...ui.btnPrimary,
               width: "100%",
               height: 54,
-              opacity: placing ? 0.7 : 1,
-              cursor: placing ? "not-allowed" : "pointer",
+              opacity: placing || minimumRemaining > 0 ? 0.7 : 1,
+              cursor: placing || minimumRemaining > 0 ? "not-allowed" : "pointer",
               justifyContent: "space-between",
               padding: "0 18px",
             }}
@@ -848,7 +936,7 @@ if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
             </span>
 
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {placing ? "Placing..." : "Place Order"} <ChevronRight size={20} />
+              {placing ? "Placing..." : minimumRemaining > 0 ? `Add Rs ${minimumRemaining}` : "Place Order"} <ChevronRight size={20} />
             </span>
           </button>
         </div>

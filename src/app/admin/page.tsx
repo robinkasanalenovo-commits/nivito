@@ -113,6 +113,7 @@ type SubAreaType = {
   id: number;
   name: string;
   active: boolean;
+  minOrder?: number;
 };
 
 type AreaType = {
@@ -120,6 +121,7 @@ type AreaType = {
   name: string;
   active: boolean;
   order: number;
+  minOrder?: number;
   subAreas: SubAreaType[];
 };
 
@@ -286,11 +288,13 @@ export default function AdminPage() {
         name: item.name || "",
         active: item.active ?? true,
         order: Number(item.order || index + 1),
+        minOrder: Number(item.minOrder || 0),
         subAreas: Array.isArray(item.subAreas)
           ? item.subAreas.map((sub, subIndex) => ({
               id: Number(sub.id || Date.now() + index + subIndex + 100),
               name: sub.name || "",
               active: sub.active ?? true,
+              minOrder: Number(sub.minOrder || 0),
             }))
           : [],
       }))
@@ -591,6 +595,39 @@ setCustomers(customerData.customers || []);
       banners,
       categories,
       areas: updated.map((item, i) => ({ ...item, order: i + 1 })),
+      products,
+    });
+  };
+
+  const updateAreaMinOrder = async (areaId: number, value: string) => {
+    const minOrder = Math.max(0, Number(value || 0));
+
+    await saveData({
+      banners,
+      categories,
+      areas: areas.map((area) =>
+        area.id === areaId ? { ...area, minOrder } : area
+      ),
+      products,
+    });
+  };
+
+  const updateSubAreaMinOrder = async (areaId: number, subAreaId: number, value: string) => {
+    const minOrder = Math.max(0, Number(value || 0));
+
+    await saveData({
+      banners,
+      categories,
+      areas: areas.map((area) =>
+        area.id === areaId
+          ? {
+              ...area,
+              subAreas: (area.subAreas || []).map((sub) =>
+                sub.id === subAreaId ? { ...sub, minOrder } : sub
+              ),
+            }
+          : area
+      ),
       products,
     });
   };
@@ -2617,6 +2654,77 @@ const openWhatsAppOrder = (order: OrderType) => {
               >
                 Save Bell Notification
               </button>
+            </div>
+
+            <div className="mt-6 rounded-[22px] bg-emerald-50 p-4 ring-1 ring-emerald-100">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h3 className="text-lg font-extrabold text-gray-900">Area Minimum Order</h3>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Har area ya sub area ke liye minimum cart amount set karo. Sub area amount 0 hoga to area amount use hoga.
+                  </p>
+                </div>
+                <div className="rounded-full bg-white px-4 py-2 text-sm font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                  {areas.length} Areas
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                {areas.length === 0 ? (
+                  <div className="rounded-2xl bg-white p-5 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
+                    Pehle Areas tab me delivery areas add karo.
+                  </div>
+                ) : (
+                  areas.map((area) => (
+                    <div key={area.id} className="rounded-2xl bg-white p-4 ring-1 ring-emerald-100">
+                      <div className="grid gap-3 md:grid-cols-[1fr_220px] md:items-end">
+                        <div>
+                          <p className="text-base font-black text-gray-900">{area.name}</p>
+                          <p className="mt-1 text-xs font-bold text-gray-500">
+                            Area default minimum order amount
+                          </p>
+                        </div>
+                        <label className="block">
+                          <span className="text-xs font-extrabold uppercase tracking-wide text-emerald-700">
+                            Min order Rs
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={area.minOrder || ""}
+                            onChange={(e) => updateAreaMinOrder(area.id, e.target.value)}
+                            placeholder="e.g. 199"
+                            className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-extrabold outline-none focus:border-emerald-600"
+                          />
+                        </label>
+                      </div>
+
+                      {(area.subAreas || []).length > 0 && (
+                        <div className="mt-4 grid gap-2 md:grid-cols-2">
+                          {(area.subAreas || []).map((sub) => (
+                            <label key={sub.id} className="rounded-xl bg-gray-50 p-3 ring-1 ring-black/5">
+                              <span className="block truncate text-sm font-extrabold text-gray-800">
+                                {sub.name}
+                              </span>
+                              <span className="mt-1 block text-xs font-bold text-gray-500">
+                                0 = area default
+                              </span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={sub.minOrder || ""}
+                                onChange={(e) => updateSubAreaMinOrder(area.id, sub.id, e.target.value)}
+                                placeholder={`Default Rs ${area.minOrder || 0}`}
+                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-extrabold outline-none focus:border-emerald-600"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
             <div className="mt-6 rounded-[22px] bg-gray-50 p-4 ring-1 ring-black/5">

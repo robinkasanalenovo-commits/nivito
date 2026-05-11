@@ -45,9 +45,10 @@ const defaultAreas = [
     id: 1,
     name: "Loni",
     active: true,
+    minOrder: 0,
     subAreas: [
-      { id: 101, name: "Balram Nagar", active: true },
-      { id: 102, name: "Indrapuri", active: true },
+      { id: 101, name: "Balram Nagar", active: true, minOrder: 0 },
+      { id: 102, name: "Indrapuri", active: true, minOrder: 0 },
     ],
   },
 ];
@@ -91,7 +92,17 @@ function normalizeData(data: any) {
     referrals: data?.referrals || [],
     areas:
       Array.isArray(data?.areas) && data.areas.length > 0
-        ? data.areas
+        ? data.areas.map((area: any, index: number) => ({
+            ...area,
+            order: Number(area.order || index + 1),
+            minOrder: Number(area.minOrder || 0),
+            subAreas: Array.isArray(area.subAreas)
+              ? area.subAreas.map((sub: any) => ({
+                  ...sub,
+                  minOrder: Number(sub.minOrder || 0),
+                }))
+              : [],
+          }))
         : defaultAreas,
     notificationSettings:
       data?.notificationSettings || defaultNotificationSettings,
