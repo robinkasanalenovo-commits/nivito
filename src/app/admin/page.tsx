@@ -2433,7 +2433,13 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
 
       <button
         onClick={addCoupon}
-        className="mt-4 rounded-xl bg-green-600 px-8 py-3 text-base font-bold text-white shadow-md transition active:scale-95"
+        className="mt-4 rounded-xl px-8 py-3 text-base font-bold shadow-md transition active:scale-95"
+        style={{
+          background: "#16a34a",
+          color: "#ffffff",
+          boxShadow: "0 12px 24px rgba(22, 163, 74, 0.28)",
+          minWidth: 170,
+        }}
       >
         Save Coupon
       </button>
