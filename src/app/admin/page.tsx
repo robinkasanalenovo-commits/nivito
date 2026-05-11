@@ -98,6 +98,17 @@ type NotificationSettingsType = {
   updatedAt: number;
 };
 
+type CouponType = {
+  id: number;
+  code: string;
+  type: "flat" | "percent";
+  value: number;
+  minOrder: number;
+  maxDiscount?: number;
+  label: string;
+  active: boolean;
+};
+
 type SubAreaType = {
   id: number;
   name: string;
@@ -129,7 +140,7 @@ type UnitType = "weight" | "pcs";
 type AutoVariantKey = "100g" | "250g" | "500g" | "1kg" | "2kg" | "5kg" | "1pc" | "2pc" | "3pc"| "4pc" | "5pc" | "6pc"| "7pc" | "8pc" | "9pc"| "10pc" | "11pc" | "12pc";
 type PriceMode = "auto" | "manual";
 
-const tabs = ["Dashboard", "Areas", "Categories", "Products", "Orders", "Service Requests", "Customers", "Settings"];
+const tabs = ["Dashboard", "Areas", "Categories", "Products", "Coupons", "Orders", "Service Requests", "Customers", "Settings"];
 
 const defaultServiceOptions: ServiceOptionConfigType[] = [
   { serviceName: "AC Service", options: ["AC Service", "Gas Filling", "Cooling Problem", "Installation"] },
@@ -165,6 +176,13 @@ const defaultNotificationSettings: NotificationSettingsType = {
   updatedAt: 0,
 };
 
+const defaultCoupons: CouponType[] = [
+  { id: 1, code: "WELCOME50", type: "flat", value: 50, minOrder: 199, maxDiscount: 0, label: "Rs 50 off", active: true },
+  { id: 2, code: "NIVITO10", type: "percent", value: 10, minOrder: 299, maxDiscount: 100, label: "10% off max Rs 100", active: true },
+  { id: 3, code: "FRESH20", type: "percent", value: 20, minOrder: 499, maxDiscount: 150, label: "20% off max Rs 150", active: true },
+  { id: 4, code: "FIRST100", type: "flat", value: 100, minOrder: 599, maxDiscount: 0, label: "Rs 100 off", active: true },
+];
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [banners, setBanners] = useState<BannerType[]>([]);
@@ -174,6 +192,16 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<OrderType[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequestType[]>([]);
   const [serviceOptions, setServiceOptions] = useState<ServiceOptionConfigType[]>(defaultServiceOptions);
+  const [coupons, setCoupons] = useState<CouponType[]>(defaultCoupons);
+  const [couponForm, setCouponForm] = useState({
+    code: "",
+    type: "flat" as "flat" | "percent",
+    value: "",
+    minOrder: "",
+    maxDiscount: "",
+    label: "",
+    active: true,
+  });
   const [serviceOptionForm, setServiceOptionForm] = useState({
     serviceName: defaultServiceOptions[0].serviceName,
     option: "",
@@ -317,6 +345,11 @@ export default function AdminPage() {
         ? data.serviceOptions
         : defaultServiceOptions
     );
+    setCoupons(
+      Array.isArray(data.coupons) && data.coupons.length > 0
+        ? data.coupons
+        : defaultCoupons
+    );
     const customerRes = await fetch("/api/customers", {
   cache: "no-store",
 });
@@ -345,6 +378,7 @@ setCustomers(customerData.customers || []);
     orders?: OrderType[];
     serviceRequests?: ServiceRequestType[];
     serviceOptions?: ServiceOptionConfigType[];
+    coupons?: CouponType[];
     notificationSettings?: NotificationSettingsType;
   }) => {
     await fetch("/api/admin-data", {
@@ -356,6 +390,7 @@ setCustomers(customerData.customers || []);
         orders: newData.orders ?? orders,
         serviceRequests: newData.serviceRequests ?? serviceRequests,
         serviceOptions: newData.serviceOptions ?? serviceOptions,
+        coupons: newData.coupons ?? coupons,
         notificationSettings:
           newData.notificationSettings || notificationForm || defaultNotificationSettings,
       }),
@@ -1019,6 +1054,84 @@ setCustomers(customerData.customers || []);
       categories,
       products,
       serviceOptions: updatedOptions,
+    });
+  };
+
+  const addCoupon = async () => {
+    const code = couponForm.code.trim().toUpperCase();
+    const value = Number(couponForm.value || 0);
+    const minOrder = Number(couponForm.minOrder || 0);
+    const maxDiscount = Number(couponForm.maxDiscount || 0);
+
+    if (!code) {
+      alert("Coupon code daalo");
+      return;
+    }
+
+    if (value <= 0) {
+      alert("Discount value 0 se zyada hona chahiye");
+      return;
+    }
+
+    if (coupons.some((coupon) => coupon.code.toUpperCase() === code)) {
+      alert("Yeh coupon code already hai");
+      return;
+    }
+
+    const newCoupon: CouponType = {
+      id: Date.now(),
+      code,
+      type: couponForm.type,
+      value,
+      minOrder,
+      maxDiscount,
+      label:
+        couponForm.label.trim() ||
+        (couponForm.type === "flat"
+          ? `Rs ${value} off`
+          : `${value}% off${maxDiscount > 0 ? ` max Rs ${maxDiscount}` : ""}`),
+      active: couponForm.active,
+    };
+
+    await saveData({
+      banners,
+      categories,
+      products,
+      coupons: [newCoupon, ...coupons],
+    });
+
+    setCouponForm({
+      code: "",
+      type: "flat",
+      value: "",
+      minOrder: "",
+      maxDiscount: "",
+      label: "",
+      active: true,
+    });
+
+    alert("Coupon save ho gaya");
+  };
+
+  const toggleCoupon = async (couponId: number) => {
+    await saveData({
+      banners,
+      categories,
+      products,
+      coupons: coupons.map((coupon) =>
+        coupon.id === couponId ? { ...coupon, active: !coupon.active } : coupon
+      ),
+    });
+  };
+
+  const deleteCoupon = async (couponId: number) => {
+    if (!confirm("Coupon delete karna hai?")) return;
+
+    await saveData({
+      banners,
+      categories,
+      products,
+      coupons: coupons.filter((coupon) => coupon.id !== couponId),
     });
   };
 
@@ -2238,6 +2351,143 @@ className={`flex h-8 w-8 items-center justify-center rounded-lg border text-xs f
             </div>
           </section>
         )}
+
+        {activeTab === "Coupons" && (
+  <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 className="text-xl font-extrabold">Coupons Management</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Customer cart me jo coupon apply hoga, woh yahan se control hoga.
+        </p>
+      </div>
+
+      <div className="rounded-full bg-green-50 px-4 py-2 text-sm font-extrabold text-green-700">
+        {coupons.length} Coupons
+      </div>
+    </div>
+
+    <div className="mt-4 rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+      <h3 className="text-base font-extrabold">Add New Coupon</h3>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        <input
+          value={couponForm.code}
+          onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
+          placeholder="Coupon code, e.g. SAVE50"
+          className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold uppercase outline-none focus:border-green-600"
+        />
+
+        <select
+          value={couponForm.type}
+          onChange={(e) =>
+            setCouponForm({ ...couponForm, type: e.target.value as "flat" | "percent" })
+          }
+          className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-green-600"
+        >
+          <option value="flat">Flat Rs Discount</option>
+          <option value="percent">Percent Discount</option>
+        </select>
+
+        <input
+          type="number"
+          value={couponForm.value}
+          onChange={(e) => setCouponForm({ ...couponForm, value: e.target.value })}
+          placeholder={couponForm.type === "flat" ? "Discount Rs" : "Discount %"}
+          className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-green-600"
+        />
+
+        <input
+          type="number"
+          value={couponForm.minOrder}
+          onChange={(e) => setCouponForm({ ...couponForm, minOrder: e.target.value })}
+          placeholder="Minimum order Rs"
+          className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-green-600"
+        />
+
+        <input
+          type="number"
+          value={couponForm.maxDiscount}
+          onChange={(e) => setCouponForm({ ...couponForm, maxDiscount: e.target.value })}
+          placeholder="Max discount Rs, optional"
+          className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-green-600"
+        />
+
+        <input
+          value={couponForm.label}
+          onChange={(e) => setCouponForm({ ...couponForm, label: e.target.value })}
+          placeholder="Customer label, optional"
+          className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-green-600"
+        />
+      </div>
+
+      <label className="mt-3 flex items-center gap-2 text-sm font-extrabold text-gray-700">
+        <input
+          type="checkbox"
+          checked={couponForm.active}
+          onChange={(e) => setCouponForm({ ...couponForm, active: e.target.checked })}
+          className="h-4 w-4"
+        />
+        Coupon active rakho
+      </label>
+
+      <button
+        onClick={addCoupon}
+        className="mt-4 rounded-xl bg-green-600 px-8 py-3 text-base font-bold text-white shadow-md transition active:scale-95"
+      >
+        Save Coupon
+      </button>
+    </div>
+
+    <div className="mt-4 grid gap-3">
+      {coupons.length === 0 ? (
+        <div className="rounded-2xl bg-gray-50 p-6 text-center text-sm font-bold text-gray-500 ring-1 ring-black/5">
+          Abhi koi coupon nahi hai.
+        </div>
+      ) : (
+        coupons.map((coupon) => (
+          <div
+            key={coupon.id}
+            className="flex flex-col gap-3 rounded-2xl bg-gray-50 p-4 ring-1 ring-black/5 md:flex-row md:items-center md:justify-between"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-black text-gray-900">{coupon.code}</h3>
+                <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${
+                  coupon.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
+                }`}>
+                  {coupon.active ? "Active" : "Inactive"}
+                </span>
+              </div>
+              <p className="mt-1 text-sm font-bold text-gray-700">{coupon.label}</p>
+              <p className="mt-1 text-xs font-semibold text-gray-500">
+                {coupon.type === "flat" ? `Rs ${coupon.value} off` : `${coupon.value}% off`}
+                {" "} | Min order Rs {coupon.minOrder || 0}
+                {coupon.maxDiscount ? ` | Max Rs ${coupon.maxDiscount}` : ""}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 md:flex md:flex-shrink-0">
+              <button
+                onClick={() => toggleCoupon(coupon.id)}
+                className="rounded-full bg-yellow-100 px-4 py-2 text-xs font-bold text-yellow-700"
+              >
+                {coupon.active ? "Disable" : "Enable"}
+              </button>
+
+              <button
+                onClick={() => deleteCoupon(coupon.id)}
+                className="rounded-full bg-red-100 px-4 py-2 text-xs font-bold text-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </section>
+)}
 
         {activeTab === "Orders" && (
   <section className="mt-4 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/5">

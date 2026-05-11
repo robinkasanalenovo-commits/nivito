@@ -12,13 +12,20 @@ import { theme, ui } from "@/lib/theme";
 
 const TIPS = [10, 20, 30, 50];
 
-const FALLBACK_COUPONS: Record<string, {
+type CouponConfig = {
   type: "flat" | "percent";
   value: number;
   minOrder: number;
   maxDiscount?: number;
   label: string;
-}> = {
+  active?: boolean;
+};
+
+type AdminCoupon = Partial<CouponConfig> & {
+  code?: string;
+};
+
+const FALLBACK_COUPONS: Record<string, CouponConfig> = {
   WELCOME50: { type: "flat", value: 50, minOrder: 199, label: "₹50 off" },
   NIVITO10: { type: "percent", value: 10, minOrder: 299, maxDiscount: 100, label: "10% off (max ₹100)" },
   FRESH20: { type: "percent", value: 20, minOrder: 499, maxDiscount: 150, label: "20% off (max ₹150)" },
@@ -119,27 +126,58 @@ export default function CartPage() {
     setCheckingCoupon(true);
     setCouponError("");
 
+    const applyCouponConfig = (couponCode: string, c: CouponConfig) => {
+      if (c.active === false) {
+        setCouponError("Yeh coupon active nahi hai");
+        return;
+      }
+
+      if (itemTotal < c.minOrder) {
+        setCouponError(`Min order Rs ${c.minOrder} hona chahiye`);
+        return;
+      }
+
+      let discount =
+        c.type === "flat" ? c.value : Math.round((itemTotal * c.value) / 100);
+
+      if (c.maxDiscount && discount > c.maxDiscount) discount = c.maxDiscount;
+
+      setAppliedCoupon({
+        code: couponCode,
+        discount,
+        message: `${c.label} applied! Rs ${discount} bach gaye`,
+      });
+
+      setCoupon("");
+    };
+
     try {
-      const res = await fetch(`/api/coupons/validate?code=${code}&total=${itemTotal}`, {
+      const res = await fetch("/api/admin-data", {
         cache: "no-store",
       });
 
       if (res.ok) {
         const data = await res.json();
+        const adminCoupons: AdminCoupon[] = Array.isArray(data.coupons) ? data.coupons : [];
+        const matchedCoupon = adminCoupons.find(
+          (item) => String(item.code || "").toUpperCase() === code
+        );
 
-        if (data.valid) {
-          setAppliedCoupon({
-            code: data.code || code,
-            discount: data.discount,
-            message: data.message || `₹${data.discount} off applied!`,
+        if (matchedCoupon) {
+          applyCouponConfig(code, {
+            type: matchedCoupon.type === "percent" ? "percent" : "flat",
+            value: Number(matchedCoupon.value || 0),
+            minOrder: Number(matchedCoupon.minOrder || 0),
+            maxDiscount: Number(matchedCoupon.maxDiscount || 0) || undefined,
+            label: matchedCoupon.label || code,
+            active: matchedCoupon.active ?? true,
           });
-          setCoupon("");
           setCheckingCoupon(false);
           return;
         }
 
-        if (data.message) {
-          setCouponError(data.message);
+        if (adminCoupons.length > 0) {
+          setCouponError("Yeh coupon valid nahi hai");
           setCheckingCoupon(false);
           return;
         }
@@ -154,27 +192,9 @@ export default function CartPage() {
       return;
     }
 
-    if (itemTotal < c.minOrder) {
-      setCouponError(`Min order ₹${c.minOrder} hona chahiye`);
-      setCheckingCoupon(false);
-      return;
-    }
-
-    let discount =
-      c.type === "flat" ? c.value : Math.round((itemTotal * c.value) / 100);
-
-    if (c.maxDiscount && discount > c.maxDiscount) discount = c.maxDiscount;
-
-    setAppliedCoupon({
-      code,
-      discount,
-      message: `${c.label} applied! ₹${discount} bach gaye`,
-    });
-
-    setCoupon("");
+    applyCouponConfig(code, c);
     setCheckingCoupon(false);
   };
-
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponError("");
