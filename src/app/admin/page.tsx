@@ -272,6 +272,9 @@ export default function AdminPage() {
   const [editProductForms, setEditProductForms] = useState<
     Record<number, { name: string; image: string; category: string; active: boolean }>
   >({});
+  const [editCategoryForms, setEditCategoryForms] = useState<
+    Record<number, { name: string; image: string; link: string; active: boolean; order: number }>
+  >({});
   const [editVariantForms, setEditVariantForms] = useState<
     Record<number, Record<number, { weight: string; sellingPrice: string; stock: string; active: boolean }>>
   >({});
@@ -952,6 +955,54 @@ setCustomers(customerData.customers || []);
       ),
       products,
     });
+  };
+
+  const saveCategoryEdits = async (category: CategoryType) => {
+    const form =
+      editCategoryForms[category.id] || {
+        name: category.name,
+        image: category.image,
+        link: category.link,
+        active: category.active,
+        order: category.order,
+      };
+
+    const name = form.name.trim();
+    if (!name) {
+      alert("Category name daalo");
+      return;
+    }
+
+    const updatedCategories = categories.map((item) =>
+      item.id === category.id
+        ? {
+            ...item,
+            name,
+            image: form.image.trim(),
+            link: form.link.trim(),
+            active: form.active,
+            order: Number(form.order || item.order || 1),
+          }
+        : item
+    );
+
+    const updatedProducts = products.map((product) =>
+      product.category === category.name ? { ...product, category: name } : product
+    );
+
+    await saveData({
+      banners,
+      categories: updatedCategories,
+      products: updatedProducts,
+    });
+
+    setEditCategoryForms((prev) => {
+      const next = { ...prev };
+      delete next[category.id];
+      return next;
+    });
+
+    alert("Category update ho gayi");
   };
 
   const toggleProduct = async (id: number) => {
@@ -1857,7 +1908,16 @@ const openWhatsAppOrder = (order: OrderType) => {
             <div className="mt-4 grid gap-3">
               {[...categories]
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((item, index, array) => (
+                .map((item, index, array) => {
+                  const editCategoryForm = editCategoryForms[item.id] || {
+                    name: item.name,
+                    image: item.image,
+                    link: item.link,
+                    active: item.active,
+                    order: item.order,
+                  };
+
+                  return (
                   <div
                     key={item.id}
                     className="flex flex-col gap-3 rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5 md:flex-row md:items-center"
@@ -1893,7 +1953,87 @@ const openWhatsAppOrder = (order: OrderType) => {
                       </div>
                     </div>
 
+                    <div className="grid gap-2 md:flex-1 md:grid-cols-2">
+                      <input
+                        value={editCategoryForm.name}
+                        onChange={(e) =>
+                          setEditCategoryForms({
+                            ...editCategoryForms,
+                            [item.id]: { ...editCategoryForm, name: e.target.value },
+                          })
+                        }
+                        placeholder="Category name"
+                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+                      />
+
+                      <input
+                        value={editCategoryForm.image}
+                        onChange={(e) =>
+                          setEditCategoryForms({
+                            ...editCategoryForms,
+                            [item.id]: { ...editCategoryForm, image: e.target.value },
+                          })
+                        }
+                        placeholder="Image URL"
+                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+                      />
+
+                      <input
+                        value={editCategoryForm.link}
+                        onChange={(e) =>
+                          setEditCategoryForms({
+                            ...editCategoryForms,
+                            [item.id]: { ...editCategoryForm, link: e.target.value },
+                          })
+                        }
+                        placeholder="/category/vegetables"
+                        className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+                      />
+
+                      <div className="grid grid-cols-[1fr_auto] gap-2">
+                        <input
+                          type="number"
+                          value={editCategoryForm.order}
+                          onChange={(e) =>
+                            setEditCategoryForms({
+                              ...editCategoryForms,
+                              [item.id]: {
+                                ...editCategoryForm,
+                                order: Number(e.target.value),
+                              },
+                            })
+                          }
+                          placeholder="Order"
+                          className="min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-blue-600"
+                        />
+
+                        <label className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={editCategoryForm.active}
+                            onChange={(e) =>
+                              setEditCategoryForms({
+                                ...editCategoryForms,
+                                [item.id]: {
+                                  ...editCategoryForm,
+                                  active: e.target.checked,
+                                },
+                              })
+                            }
+                          />
+                          Active
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-4 gap-2 md:flex md:flex-shrink-0">
+                      <button
+                        onClick={() => saveCategoryEdits(item)}
+                        className="rounded-full bg-green-100 px-3 py-2 text-xs font-bold text-green-700"
+                      >
+                        Save
+                      </button>
+
                       <button
                         onClick={() => moveCategoryUp(item.id)}
                         disabled={index === 0}
@@ -1933,7 +2073,8 @@ const openWhatsAppOrder = (order: OrderType) => {
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
             </div>
           </section>
         )}
