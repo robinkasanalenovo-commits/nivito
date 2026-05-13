@@ -779,7 +779,17 @@ function CategoryOverview({ categories }: { categories: Category[] }) {
                   fontSize: 30,
                 }}>
                   {category.image ? (
-                    <img src={category.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <>
+                      <span>{c.emoji}</span>
+                      <img
+                        src={category.image}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </>
                   ) : c.emoji}
                 </span>
                 <strong style={{

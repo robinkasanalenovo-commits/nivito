@@ -351,8 +351,14 @@ export default function HomePage() {
               marginBottom: 7,
             }}>
               {cat.image ? (
+                <>
+                  <span style={{ fontSize: 36 }}>{c.emoji}</span>
                 <img src={cat.image} alt={cat.name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </>
               ) : <span style={{ fontSize: 36 }}>{c.emoji}</span>}
             </div>
             {/* Name */}
