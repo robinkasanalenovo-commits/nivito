@@ -138,9 +138,14 @@ export default function CategoryProductsPage() {
           .filter((p) => isCategoryOverview || isSameCategory(p.category, slug, activeCategories));
 
         setProducts(filtered);
-        const defaults: Record<number, ProductVariant> = {};
-        filtered.forEach((p) => { defaults[p.id] = p.variants[0]; });
-        setSelectedVariants(defaults);
+        setSelectedVariants((prev) => {
+          const next: Record<number, ProductVariant> = {};
+          filtered.forEach((p) => {
+            const previous = prev[p.id];
+            next[p.id] = p.variants.find((v) => v.id === previous?.id) || p.variants[0];
+          });
+          return next;
+        });
       } catch (e) {
         console.log("Category products load error:", e);
         setProducts([]);
@@ -486,7 +491,7 @@ export default function CategoryProductsPage() {
                         const active = v.id === selectedVariant.id;
                         return (
                           <button key={v.id}
-                            onClick={() => setSelectedVariants({ ...selectedVariants, [product.id]: v })}
+                            onClick={() => setSelectedVariants((prev) => ({ ...prev, [product.id]: v }))}
                             style={{
                               flexShrink: 0,
                               padding: "4px 8px", borderRadius: 6,

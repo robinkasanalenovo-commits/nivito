@@ -77,9 +77,14 @@ export default function HomePage() {
             variants: (p.variants || []).filter((v) => v.active) }))
           .filter((p: Product) => p.variants.length > 0);
         setAdminProducts(prods);
-        const d: Record<number, Variant> = {};
-        prods.forEach((p: Product) => { d[p.id] = p.variants[0]; });
-        setSelectedVariants(d);
+        setSelectedVariants((prev) => {
+          const next: Record<number, Variant> = {};
+          prods.forEach((p: Product) => {
+            const previous = prev[p.id];
+            next[p.id] = p.variants.find((v) => v.id === previous?.id) || p.variants[0];
+          });
+          return next;
+        });
         setNotif({ ...defaultNotif, ...(data.notificationSettings || {}) });
       } catch (e) { console.log(e); }
     };
@@ -748,7 +753,7 @@ function ProductCard({ product, selectedVariants, setSelectedVariants, cart, add
           {product.variants.slice(0, 3).map((vr: Variant) => {
             const a = vr.id === v.id;
             return (
-              <button key={vr.id} onClick={() => setSelectedVariants({ ...selectedVariants, [product.id]: vr })}
+              <button key={vr.id} onClick={() => setSelectedVariants((prev) => ({ ...prev, [product.id]: vr }))}
                 style={{
                   flexShrink: 0, padding: "2px 5px", borderRadius: 4,
                   border: a ? "1.5px solid #059669" : "1px solid #e5e7eb",
