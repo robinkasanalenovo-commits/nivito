@@ -89,11 +89,37 @@ function getCustomerAddress(user: LoginUserType | null): SavedAddress | null {
 }
 
 function isPlaceholderAddress(address: SavedAddress) {
+  const addressText = `${address.address || ""} ${address.city || ""} ${address.pincode || ""}`.toLowerCase();
   return (
-    address.address === defaultAddress.address &&
-    address.city === defaultAddress.city &&
-    !address.mobile
+    !address.address?.trim() ||
+    (
+      addressText.includes("sector 56") &&
+      addressText.includes("noida") &&
+      (!address.landmark?.trim() || address.landmark === defaultAddress.landmark)
+    )
   );
+}
+
+function readStoredCustomer() {
+  const savedUsers = [
+    localStorage.getItem("nivito_user"),
+    localStorage.getItem("nivito_customer"),
+  ].filter(Boolean);
+
+  for (const saved of savedUsers) {
+    try {
+      const user = JSON.parse(saved as string) as LoginUserType;
+      if (getCustomerAddress(user)) return user;
+    } catch {}
+  }
+
+  for (const saved of savedUsers) {
+    try {
+      return JSON.parse(saved as string) as LoginUserType;
+    } catch {}
+  }
+
+  return null;
 }
 
 export default function ProfilePage() {
@@ -115,13 +141,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const loadUser = () => {
-      const saved =
-        window.localStorage.getItem("nivito_user") ||
-        window.localStorage.getItem("nivito_customer");
-      if (saved) {
-        try { setLoginUser(JSON.parse(saved)); }
-        catch { window.localStorage.removeItem("nivito_user"); setLoginUser(null); }
-      } else setLoginUser(null);
+      setLoginUser(readStoredCustomer());
     };
     loadUser();
     window.addEventListener("focus", loadUser);
@@ -143,15 +163,11 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    const savedCustomer =
-      localStorage.getItem("nivito_user") ||
-      localStorage.getItem("nivito_customer");
+    const savedCustomer = readStoredCustomer();
     let customerAddress: SavedAddress | null = null;
 
     if (savedCustomer) {
-      try {
-        customerAddress = getCustomerAddress(JSON.parse(savedCustomer));
-      } catch {}
+      customerAddress = getCustomerAddress(savedCustomer);
     }
 
     const savedAddresses = localStorage.getItem("nivito_addresses");
