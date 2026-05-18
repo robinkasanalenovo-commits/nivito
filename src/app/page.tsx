@@ -86,7 +86,7 @@ export default function HomePage() {
           return next;
         });
         setNotif({ ...defaultNotif, ...(data.notificationSettings || {}) });
-      } catch (e) { console.log(e); }
+      } catch {}
     };
     load();
     const t = window.setInterval(load, 3000);

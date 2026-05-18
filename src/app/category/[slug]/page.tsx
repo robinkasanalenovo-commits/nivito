@@ -146,8 +146,7 @@ export default function CategoryProductsPage() {
           });
           return next;
         });
-      } catch (e) {
-        console.log("Category products load error:", e);
+      } catch {
         setProducts([]);
         setSelectedVariants({});
       } finally {

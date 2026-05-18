@@ -42,6 +42,64 @@ type DeliveryArea = {
   subAreas?: DeliverySubArea[];
 };
 
+type StoredCustomer = {
+  name?: string;
+  full_name?: string;
+  fullName?: string;
+  customerName?: string;
+  mobile?: string;
+  mobileNumber?: string;
+  mobile_number?: string;
+  phone?: string;
+  customerMobile?: string;
+  full_address?: string;
+  fullAddress?: string;
+  customerAddress?: string;
+  deliveryAddress?: string;
+  address?: string;
+  area?: string;
+  sub_area?: string;
+  subArea?: string;
+  landmark?: string;
+  customerArea?: string;
+  customerSubArea?: string;
+};
+
+function readStoredCustomer() {
+  const saved =
+    localStorage.getItem("nivito_customer") ||
+    localStorage.getItem("nivito_user") ||
+    localStorage.getItem("customer") ||
+    localStorage.getItem("user");
+
+  if (!saved) return null;
+
+  try {
+    return JSON.parse(saved) as StoredCustomer;
+  } catch {
+    return null;
+  }
+}
+
+function getCustomerAddress(user: StoredCustomer | null) {
+  if (!user) return "";
+  return (
+    user.full_address ||
+    user.fullAddress ||
+    user.customerAddress ||
+    user.deliveryAddress ||
+    user.address ||
+    [user.area, user.sub_area || user.subArea, user.landmark]
+      .filter((v) => v && String(v).trim())
+      .join(", ") ||
+    ""
+  );
+}
+
+function getItemMrp(item: { price: number; mrp?: number }) {
+  return Math.max(Number(item.mrp || 0), item.price);
+}
+
 export default function CartPage() {
   const { cart, increaseQty, decreaseQty, removeFromCart, clearCart } = useCart();
 
@@ -60,54 +118,17 @@ export default function CartPage() {
   const [customerArea, setCustomerArea] = useState("");
   const [customerSubArea, setCustomerSubArea] = useState("");
   const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
+  const [loadingAreas, setLoadingAreas] = useState(true);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      const savedCustomer =
-        localStorage.getItem("nivito_customer") ||
-        localStorage.getItem("customer") ||
-        localStorage.getItem("user") ||
-        localStorage.getItem("nivito_user");
+    const user = readStoredCustomer();
+    if (!user) return;
 
-      if (!savedCustomer) return;
-
-      try {
-        const user = JSON.parse(savedCustomer);
-        console.log("CUSTOMER DATA:", user);
-
-        setCustomerName(
-          user.name ||
-            user.full_name ||
-            user.fullName ||
-            user.customerName ||
-            "Customer"
-        );
-
-        setCustomerMobile(
-          user.mobile ||
-            user.mobileNumber ||
-            user.mobile_number ||
-            user.phone ||
-            user.customerMobile ||
-            ""
-        );
-
-        const resolvedAddress =
-          user.full_address ||
-          user.fullAddress ||
-          user.customerAddress ||
-          user.deliveryAddress ||
-          [user.address, user.area, user.sub_area || user.subArea, user.landmark]
-            .filter((v) => v && String(v).trim())
-            .join(", ") ||
-          "";
-        setCustomerAddress(resolvedAddress);
-        setCustomerArea(user.area || user.customerArea || "");
-        setCustomerSubArea(user.sub_area || user.subArea || user.customerSubArea || "");
-      } catch {
-        console.log("Customer data load nahi hua");
-      }
-    });
+    setCustomerName(user.name || user.full_name || user.fullName || user.customerName || "Customer");
+    setCustomerMobile(user.mobile || user.mobileNumber || user.mobile_number || user.phone || user.customerMobile || "");
+    setCustomerAddress(getCustomerAddress(user));
+    setCustomerArea(user.area || user.customerArea || "");
+    setCustomerSubArea(user.sub_area || user.subArea || user.customerSubArea || "");
   }, []);
 
   useEffect(() => {
@@ -118,6 +139,8 @@ export default function CartPage() {
         setDeliveryAreas(Array.isArray(data.areas) ? data.areas : []);
       } catch {
         setDeliveryAreas([]);
+      } finally {
+        setLoadingAreas(false);
       }
     };
 
@@ -130,7 +153,7 @@ export default function CartPage() {
   );
 
   const mrpTotal = useMemo(
-    () => cart.reduce((t, i) => t + Math.round(i.price * 1.18) * i.quantity, 0),
+    () => cart.reduce((t, i) => t + getItemMrp(i) * i.quantity, 0),
     [cart]
   );
 
@@ -242,31 +265,20 @@ export default function CartPage() {
   const placeOrder = async () => {
     if (cart.length === 0) return;
 
-  const savedCustomer = localStorage.getItem("nivito_customer");
+  const savedCustomer = readStoredCustomer();
 
 let finalCustomerName = customerName;
 let finalCustomerMobile = customerMobile;
 let finalCustomerAddress = customerAddress;
 
 if (savedCustomer) {
-  try {
-    const user = JSON.parse(savedCustomer);
-
     finalCustomerName =
-      user.name || user.full_name || user.fullName || "Customer";
+      savedCustomer.name || savedCustomer.full_name || savedCustomer.fullName || "Customer";
 
     finalCustomerMobile =
-      user.mobile || user.mobile_number || user.mobileNumber || user.phone || "";
+      savedCustomer.mobile || savedCustomer.mobile_number || savedCustomer.mobileNumber || savedCustomer.phone || "";
 
-   finalCustomerAddress =
-  user.full_address ||
-  user.fullAddress ||
-  user.address ||
-  [user.area, user.sub_area || user.subArea, user.landmark]
-    .filter((v) => v && String(v).trim())
-    .join(", ") ||
-  "";
-  } catch {}
+    finalCustomerAddress = getCustomerAddress(savedCustomer);
 }
 
 if (!finalCustomerMobile) {
@@ -274,8 +286,9 @@ if (!finalCustomerMobile) {
   return;
 }
 
-if (!finalCustomerAddress || !finalCustomerAddress.trim()) {
-  finalCustomerAddress = customerAddress || "Address not provided";
+if (!finalCustomerAddress || !finalCustomerAddress.trim() || finalCustomerAddress === "Address not provided") {
+  alert("Please profile mein delivery address add karo");
+  return;
 }
 
 if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
@@ -286,9 +299,6 @@ if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
     setPlacing(true);
 
     try {
-      const res = await fetch("/api/admin-data", { cache: "no-store" });
-      const data = await res.json();
-
       const newOrder = {
         id: Date.now(),
         orderId: `NIV-${Date.now()}`,
@@ -316,11 +326,13 @@ if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
         createdAt: new Date().toISOString(),
       };
 
-      await fetch("/api/admin-data", {
+      const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, orders: [newOrder, ...(data.orders || [])] }),
+        body: JSON.stringify(newOrder),
       });
+
+      if (!orderRes.ok) throw new Error("Order save failed");
 
       clearCart();
       alert("Order place ho gaya ✅");
@@ -548,6 +560,12 @@ if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
               Delivery to
             </div>
 
+            {loadingAreas && (
+              <div style={{ fontSize: 11, color: theme.gray[500], marginTop: 2 }}>
+                Loading delivery areas...
+              </div>
+            )}
+
             <div style={{
               fontSize: 13,
               fontWeight: 800,
@@ -568,7 +586,7 @@ if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
 
         <div style={{ display: "grid", gap: 10 }}>
           {cart.map((item) => {
-            const mrp = Math.round(item.price * 1.18);
+            const mrp = getItemMrp(item);
             const itemSaving = (mrp - item.price) * item.quantity;
 
             return (
@@ -609,17 +627,21 @@ if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
                     <span style={{ fontSize: 14, fontWeight: 900, color: theme.gray[900] }}>₹{item.price}</span>
-                    <span style={{ fontSize: 11, color: theme.gray[400], textDecoration: "line-through" }}>₹{mrp}</span>
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: theme.primary[700],
-                      background: theme.primary[50],
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                    }}>
-                      {Math.round(((mrp - item.price) / mrp) * 100)}% OFF
-                    </span>
+                    {mrp > item.price && (
+                      <>
+                        <span style={{ fontSize: 11, color: theme.gray[400], textDecoration: "line-through" }}>₹{mrp}</span>
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: theme.primary[700],
+                          background: theme.primary[50],
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                        }}>
+                          {Math.round(((mrp - item.price) / mrp) * 100)}% OFF
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
@@ -884,7 +906,7 @@ if (deliveryMinimum > 0 && itemTotal < deliveryMinimum) {
           <h3 style={{ ...ui.sectionTitle, marginBottom: 12 }}>Bill Details</h3>
 
           <div style={{ display: "grid", gap: 8, fontSize: 13 }}>
-            <Row label="Item Total (MRP)" value={`₹${mrpTotal}`} strikethrough />
+            {productSavings > 0 && <Row label="Item Total (MRP)" value={`₹${mrpTotal}`} strikethrough />}
             <Row label="Item Total" value={`₹${itemTotal}`} />
             {productSavings > 0 && <Row label="Product Discount" value={`-₹${productSavings}`} good />}
             {couponDiscount > 0 && <Row label={`Coupon (${appliedCoupon?.code})`} value={`-₹${couponDiscount}`} good />}

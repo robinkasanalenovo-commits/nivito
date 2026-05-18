@@ -5,17 +5,11 @@ import bcrypt from "bcryptjs";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.log("Supabase env missing");
-}
-
 const supabase = createClient(supabaseUrl || "", supabaseKey || "");
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log("SIGNUP BODY:", body);
-
     const {
       full_name,
       mobile_number,
@@ -53,7 +47,6 @@ export async function POST(req: Request) {
 });
 
     if (error) {
-      console.log("SUPABASE SIGNUP ERROR:", error);
       return NextResponse.json(
         { message: "Signup failed", error: error.message },
         { status: 500 }
@@ -62,7 +55,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Signup successful ✅" });
   } catch (err: any) {
-    console.log("SIGNUP SERVER ERROR:", err);
     return NextResponse.json(
       { message: "Server error", error: err?.message || String(err) },
       { status: 500 }

@@ -24,7 +24,6 @@ export default function LoginPage() {
         body: JSON.stringify({ mobile_number: mobile, password }),
       });
       const data = await res.json();
-      console.log("LOGIN CUSTOMER DATA:", data.customer);
       if (res.ok) {
        localStorage.setItem("nivito_user", JSON.stringify(data.customer));
 

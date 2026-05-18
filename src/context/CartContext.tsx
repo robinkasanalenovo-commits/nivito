@@ -6,6 +6,7 @@ type CartItem = {
   id: number;
   name: string;
   price: number;
+  mrp?: number;
   quantity: number;
   image?: string;
 };
@@ -27,20 +28,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const savedCart = localStorage.getItem("cart");
+    try {
+      const savedCart = localStorage.getItem("cart");
 
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart);
-          setCart(Array.isArray(parsedCart) ? parsedCart : []);
-        }
-      } catch {
-        localStorage.removeItem("cart");
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        setCart(Array.isArray(parsedCart) ? parsedCart : []);
       }
+    } catch {
+      localStorage.removeItem("cart");
+    }
 
-      setLoading(false);
-    });
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -62,6 +61,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 ...i,
                 quantity: i.quantity + qtyToAdd,
                 image: item.image || i.image,
+                mrp: item.mrp || i.mrp,
               }
             : i
         );
@@ -73,6 +73,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           id: item.id,
           name: item.name,
           price: item.price,
+          mrp: item.mrp,
           image: item.image,
           quantity: qtyToAdd,
         },
