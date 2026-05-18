@@ -13,7 +13,21 @@ type Order = {
   orderStatus: string;
   createdAt: string;
 };
-type LoginUserType = { id: number; full_name: string; mobile_number: string; created_at?: string };
+type LoginUserType = {
+  id?: number;
+  full_name?: string;
+  name?: string;
+  mobile_number?: string;
+  mobile?: string;
+  phone?: string;
+  area?: string;
+  sub_area?: string;
+  subArea?: string;
+  address?: string;
+  landmark?: string;
+  full_address?: string;
+  created_at?: string;
+};
 type CouponType = {
   id: number;
   code: string;
@@ -38,6 +52,50 @@ const defaultAddress: SavedAddress = {
   landmark: "", isDefault: true,
 };
 
+function getCustomerName(user: LoginUserType | null) {
+  return user?.full_name || user?.name || "Customer";
+}
+
+function getCustomerMobile(user: LoginUserType | null) {
+  return user?.mobile_number || user?.mobile || user?.phone || "";
+}
+
+function getCustomerAddress(user: LoginUserType | null): SavedAddress | null {
+  if (!user) return null;
+
+  const area = user.area || "";
+  const subArea = user.sub_area || user.subArea || "";
+  const address = user.address || "";
+  const landmark = user.landmark || "";
+  const fullAddress =
+    user.full_address ||
+    [area, subArea, address, landmark ? `Landmark: ${landmark}` : ""]
+      .filter((v) => v && String(v).trim())
+      .join(", ");
+
+  if (!fullAddress.trim() && !address.trim()) return null;
+
+  return {
+    id: 1,
+    title: "Home",
+    name: getCustomerName(user),
+    mobile: getCustomerMobile(user),
+    address: address || fullAddress,
+    city: [area, subArea].filter(Boolean).join(", ") || "Noida",
+    pincode: "201301",
+    landmark,
+    isDefault: true,
+  };
+}
+
+function isPlaceholderAddress(address: SavedAddress) {
+  return (
+    address.address === defaultAddress.address &&
+    address.city === defaultAddress.city &&
+    !address.mobile
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -57,7 +115,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const loadUser = () => {
-      const saved = window.localStorage.getItem("nivito_user");
+      const saved =
+        window.localStorage.getItem("nivito_user") ||
+        window.localStorage.getItem("nivito_customer");
       if (saved) {
         try { setLoginUser(JSON.parse(saved)); }
         catch { window.localStorage.removeItem("nivito_user"); setLoginUser(null); }
@@ -83,20 +143,39 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
+    const savedCustomer =
+      localStorage.getItem("nivito_user") ||
+      localStorage.getItem("nivito_customer");
+    let customerAddress: SavedAddress | null = null;
+
+    if (savedCustomer) {
+      try {
+        customerAddress = getCustomerAddress(JSON.parse(savedCustomer));
+      } catch {}
+    }
+
     const savedAddresses = localStorage.getItem("nivito_addresses");
     if (savedAddresses) {
       try {
         const parsed = JSON.parse(savedAddresses);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          if (customerAddress && parsed.length === 1 && isPlaceholderAddress(parsed[0])) {
+            setAddresses([customerAddress]);
+            setAddressForm(customerAddress);
+            localStorage.setItem("nivito_addresses", JSON.stringify([customerAddress]));
+            return;
+          }
           setAddresses(parsed);
           setAddressForm(parsed.find((a: SavedAddress) => a.isDefault) || parsed[0]);
           return;
         }
       } catch { localStorage.removeItem("nivito_addresses"); }
     }
-    setAddresses([defaultAddress]);
-    setAddressForm(defaultAddress);
-    localStorage.setItem("nivito_addresses", JSON.stringify([defaultAddress]));
+
+    const initialAddress = customerAddress || defaultAddress;
+    setAddresses([initialAddress]);
+    setAddressForm(initialAddress);
+    localStorage.setItem("nivito_addresses", JSON.stringify([initialAddress]));
   }, []);
 
   useEffect(() => {
@@ -208,15 +287,15 @@ export default function ProfilePage() {
           <div style={styles.loginCard}>
             <div style={styles.avatarBox}>
               <div style={styles.avatar}>
-                {loginUser ? loginUser.full_name.charAt(0).toUpperCase() : "👤"}
+                {loginUser ? getCustomerName(loginUser).charAt(0).toUpperCase() : "👤"}
               </div>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={styles.hello}>
-                {loginUser ? `Hello, ${loginUser.full_name} 👋` : "Hello, Customer 👋"}
+                {loginUser ? `Hello, ${getCustomerName(loginUser)} 👋` : "Hello, Customer 👋"}
               </h2>
               <p style={styles.subText}>
-                {loginUser ? `Mobile: +91 ${loginUser.mobile_number}` : "Login to access orders & offers"}
+                {loginUser ? `Mobile: +91 ${getCustomerMobile(loginUser)}` : "Login to access orders & offers"}
               </p>
             </div>
             <button onClick={loginUser ? handleLogout : handleLogin} style={styles.loginBtn}>
