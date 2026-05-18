@@ -144,6 +144,23 @@ function readStoredCustomer() {
   return null;
 }
 
+async function fetchFreshCustomer(user: LoginUserType | null) {
+  const mobile = getCustomerMobile(user);
+  if (!mobile) return user;
+
+  try {
+    const res = await fetch(`/api/customers/profile?mobile=${encodeURIComponent(mobile)}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return user;
+
+    const data = await res.json();
+    return data.customer || user;
+  } catch {
+    return user;
+  }
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { cart } = useCart();
@@ -164,16 +181,40 @@ export default function ProfilePage() {
   );
   const cartCount = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart]);
 
+  const hydrateAddresses = (user: LoginUserType | null) => {
+    const customerAddress = getCustomerAddress(user);
+    let savedList: SavedAddress[] = [];
+
+    try {
+      const parsed = JSON.parse(localStorage.getItem("nivito_addresses") || "[]");
+      savedList = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      localStorage.removeItem("nivito_addresses");
+    }
+
+    const merged = mergeAddresses(savedList, customerAddress);
+    setAddresses(merged);
+    setAddressForm(merged.find((a: SavedAddress) => a.isDefault) || merged[0]);
+    localStorage.setItem("nivito_addresses", JSON.stringify(merged));
+  };
+
   useEffect(() => {
-    const loadUser = () => {
-      setLoginUser(readStoredCustomer());
+    const loadUserData = async () => {
+      const localUser = readStoredCustomer();
+      const freshUser = await fetchFreshCustomer(localUser);
+      setLoginUser(freshUser);
+      if (freshUser) {
+        localStorage.setItem("nivito_user", JSON.stringify(freshUser));
+        localStorage.setItem("nivito_customer", JSON.stringify(freshUser));
+      }
+      hydrateAddresses(freshUser);
     };
-    loadUser();
-    window.addEventListener("focus", loadUser);
-    window.addEventListener("pageshow", loadUser);
+    loadUserData();
+    window.addEventListener("focus", loadUserData);
+    window.addEventListener("pageshow", loadUserData);
     return () => {
-      window.removeEventListener("focus", loadUser);
-      window.removeEventListener("pageshow", loadUser);
+      window.removeEventListener("focus", loadUserData);
+      window.removeEventListener("pageshow", loadUserData);
     };
   }, []);
 
@@ -185,34 +226,6 @@ export default function ProfilePage() {
       localStorage.setItem("nivito_referral", code);
       setReferralCode(code);
     }
-  }, []);
-
-  useEffect(() => {
-    const savedCustomer = readStoredCustomer();
-    let customerAddress: SavedAddress | null = null;
-
-    if (savedCustomer) {
-      customerAddress = getCustomerAddress(savedCustomer);
-    }
-
-    const savedAddresses = localStorage.getItem("nivito_addresses");
-    if (savedAddresses) {
-      try {
-        const parsed = JSON.parse(savedAddresses);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const merged = mergeAddresses(parsed, customerAddress);
-          setAddresses(merged);
-          setAddressForm(merged.find((a: SavedAddress) => a.isDefault) || merged[0]);
-          localStorage.setItem("nivito_addresses", JSON.stringify(merged));
-          return;
-        }
-      } catch { localStorage.removeItem("nivito_addresses"); }
-    }
-
-    const initialAddresses = mergeAddresses([], customerAddress);
-    setAddresses(initialAddresses);
-    setAddressForm(initialAddresses[0]);
-    localStorage.setItem("nivito_addresses", JSON.stringify(initialAddresses));
   }, []);
 
   useEffect(() => {
