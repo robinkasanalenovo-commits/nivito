@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, CSSProperties } from "react";
+import { useCart } from "@/context/CartContext";
+import { appConfig } from "@/lib/appConfig";
 
 type OrderItem = { id: number; name: string; quantity: number; total: number };
 type Order = {
@@ -48,7 +50,7 @@ type ModalType =
 
 const defaultAddress: SavedAddress = {
   id: 1, title: "Home", name: "Customer", mobile: "",
-  address: "Sector 56", city: "Noida", pincode: "201301",
+  address: "", city: appConfig.defaultCity, pincode: appConfig.defaultPincode,
   landmark: "", isDefault: true,
 };
 
@@ -81,8 +83,8 @@ function getCustomerAddress(user: LoginUserType | null): SavedAddress | null {
     name: getCustomerName(user),
     mobile: getCustomerMobile(user),
     address: address || fullAddress,
-    city: [area, subArea].filter(Boolean).join(", ") || "Noida",
-    pincode: "201301",
+    city: [area, subArea].filter(Boolean).join(", ") || appConfig.defaultCity,
+    pincode: appConfig.defaultPincode,
     landmark,
     isDefault: true,
   };
@@ -93,11 +95,31 @@ function isPlaceholderAddress(address: SavedAddress) {
   return (
     !address.address?.trim() ||
     (
-      addressText.includes("sector 56") &&
+      (
+        addressText.includes("sector 56") ||
+        addressText === `${appConfig.defaultCity} ${appConfig.defaultPincode}`.toLowerCase()
+      ) &&
       addressText.includes("noida") &&
       (!address.landmark?.trim() || address.landmark === defaultAddress.landmark)
     )
   );
+}
+
+function mergeAddresses(savedAddresses: SavedAddress[], customerAddress: SavedAddress | null) {
+  if (!customerAddress) return savedAddresses.length > 0 ? savedAddresses : [defaultAddress];
+
+  const usableSaved = savedAddresses
+    .filter((address) => !isPlaceholderAddress(address))
+    .map((address, index) => ({ ...address, isDefault: false, id: address.id || Date.now() + index }));
+
+  return [
+    { ...customerAddress, isDefault: true },
+    ...usableSaved.filter((address) => {
+      const sameMobile = address.mobile && address.mobile === customerAddress.mobile;
+      const sameAddress = address.address.trim().toLowerCase() === customerAddress.address.trim().toLowerCase();
+      return !(sameMobile && sameAddress);
+    }),
+  ];
 }
 
 function readStoredCustomer() {
@@ -124,11 +146,13 @@ function readStoredCustomer() {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { cart } = useCart();
   const [orders, setOrders] = useState<Order[]>([]);
   const [availableCoupons, setAvailableCoupons] = useState<CouponType[]>([]);
   const [referralCode, setReferralCode] = useState("NIVITO-000000");
   const [loginUser, setLoginUser] = useState<LoginUserType | null>(null);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [ordersError, setOrdersError] = useState("");
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [notificationOn, setNotificationOn] = useState(true);
   const [addressForm, setAddressForm] = useState<SavedAddress>(defaultAddress);
@@ -138,6 +162,7 @@ export default function ProfilePage() {
     () => addresses.find((a) => a.isDefault) || addresses[0] || defaultAddress,
     [addresses]
   );
+  const cartCount = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart]);
 
   useEffect(() => {
     const loadUser = () => {
@@ -175,23 +200,19 @@ export default function ProfilePage() {
       try {
         const parsed = JSON.parse(savedAddresses);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          if (customerAddress && parsed.length === 1 && isPlaceholderAddress(parsed[0])) {
-            setAddresses([customerAddress]);
-            setAddressForm(customerAddress);
-            localStorage.setItem("nivito_addresses", JSON.stringify([customerAddress]));
-            return;
-          }
-          setAddresses(parsed);
-          setAddressForm(parsed.find((a: SavedAddress) => a.isDefault) || parsed[0]);
+          const merged = mergeAddresses(parsed, customerAddress);
+          setAddresses(merged);
+          setAddressForm(merged.find((a: SavedAddress) => a.isDefault) || merged[0]);
+          localStorage.setItem("nivito_addresses", JSON.stringify(merged));
           return;
         }
       } catch { localStorage.removeItem("nivito_addresses"); }
     }
 
-    const initialAddress = customerAddress || defaultAddress;
-    setAddresses([initialAddress]);
-    setAddressForm(initialAddress);
-    localStorage.setItem("nivito_addresses", JSON.stringify([initialAddress]));
+    const initialAddresses = mergeAddresses([], customerAddress);
+    setAddresses(initialAddresses);
+    setAddressForm(initialAddresses[0]);
+    localStorage.setItem("nivito_addresses", JSON.stringify(initialAddresses));
   }, []);
 
   useEffect(() => {
@@ -202,16 +223,31 @@ export default function ProfilePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/admin-data", { cache: "no-store" });
-        const data = await res.json();
-        setOrders((data.orders || []).slice(0, 8));
+        const user = readStoredCustomer();
+        const mobile = getCustomerMobile(user);
+        const [ordersRes, adminRes] = await Promise.all([
+          mobile ? fetch(`/api/customer-orders?mobile=${encodeURIComponent(mobile)}`, { cache: "no-store" }) : null,
+          fetch("/api/admin-data", { cache: "no-store" }),
+        ]);
+        const adminData = await adminRes.json();
+
+        if (ordersRes?.ok) {
+          const orderData = await ordersRes.json();
+          setOrders((orderData.orders || []).slice(0, 8));
+          setOrdersError("");
+        } else {
+          setOrders([]);
+          setOrdersError(mobile ? "Orders load nahi hue. Dobara try karein." : "");
+        }
+
         setAvailableCoupons(
-          Array.isArray(data.coupons)
-            ? data.coupons.filter((coupon: CouponType) => coupon.active)
+          Array.isArray(adminData.coupons)
+            ? adminData.coupons.filter((coupon: CouponType) => coupon.active)
             : []
         );
       } catch {
         setOrders([]);
+        setOrdersError("Profile data load nahi hua. Dobara try karein.");
         setAvailableCoupons([]);
       }
     };
@@ -227,15 +263,19 @@ export default function ProfilePage() {
     const clean: SavedAddress = {
       ...addressForm,
       title: addressForm.title.trim() || "Home",
-      name: addressForm.name.trim() || loginUser?.full_name || "Customer",
-      mobile: addressForm.mobile.trim() || loginUser?.mobile_number || "",
-      address: addressForm.address.trim() || "Sector 56",
-      city: addressForm.city.trim() || "Noida",
-      pincode: addressForm.pincode.trim() || "201301",
+      name: addressForm.name.trim() || getCustomerName(loginUser),
+      mobile: addressForm.mobile.trim() || getCustomerMobile(loginUser),
+      address: addressForm.address.trim(),
+      city: addressForm.city.trim() || appConfig.defaultCity,
+      pincode: addressForm.pincode.trim() || appConfig.defaultPincode,
       landmark: addressForm.landmark.trim(),
       isDefault: true,
     };
-    const updated = [{ ...clean, id: clean.id || Date.now() }];
+    if (!clean.address) {
+      alert("Address daalna zaroori hai");
+      return;
+    }
+    const updated = mergeAddresses(addresses, { ...clean, id: clean.id || Date.now() });
     setAddresses(updated);
     localStorage.setItem("nivito_addresses", JSON.stringify(updated));
     setActiveModal(null);
@@ -261,16 +301,30 @@ export default function ProfilePage() {
   const handleLogin = () => router.push("/login");
   const handleLogout = () => {
     window.localStorage.removeItem("nivito_user");
+    window.localStorage.removeItem("nivito_customer");
     setLoginUser(null);
     router.push("/login");
   };
 
-  const callSupport = () => { window.location.href = "tel:+919873513566"; };
-  const whatsappSupport = () => {
-    window.open(`https://wa.me/919873513566?text=${encodeURIComponent("Hello Nivito, mujhe help chahiye.")}`, "_blank");
+  const handleDeleteAccount = () => {
+    if (window.confirm("Account delete page par jana hai? Is action se data remove ho sakta hai.")) {
+      router.push("/delete-account");
+    }
   };
 
-  const toggleNotification = () => {
+  const callSupport = () => { window.location.href = `tel:+${appConfig.supportPhoneIntl}`; };
+  const whatsappSupport = () => {
+    window.open(`https://wa.me/${appConfig.supportPhoneIntl}?text=${encodeURIComponent("Hello Nivito, mujhe help chahiye.")}`, "_blank");
+  };
+
+  const toggleNotification = async () => {
+    if (!notificationOn && typeof Notification !== "undefined" && Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      if (permission === "denied") {
+        alert("Browser notification permission off hai");
+        return;
+      }
+    }
     const next = !notificationOn;
     setNotificationOn(next);
     localStorage.setItem("nivito_notifications", next ? "on" : "off");
@@ -341,7 +395,7 @@ export default function ProfilePage() {
           <MenuItem icon="🎧" title="Customer Support" onClick={() => setActiveModal("support")} />
           <MenuItem icon="🛡️" title="Privacy Policy" onClick={() => router.push("/privacy")} />
           <MenuItem icon="⚙️" title="Settings" onClick={() => setActiveModal("settings")} />
-          <MenuItem icon="❌" title="Delete Account" onClick={() => router.push("/delete-account")} />
+          <MenuItem icon="❌" title="Delete Account" onClick={handleDeleteAccount} />
         </section>
 
         {/* Refer Card */}
@@ -389,7 +443,7 @@ export default function ProfilePage() {
         <nav style={styles.bottomNav}>
           <BottomNavItem href="/" icon="🏠" label="Home" />
           <BottomNavItem href="/category/all" icon="▦" label="Categories" />
-          <BottomNavItem href="/cart" icon="🛒" label="Cart" badge="2" />
+          <BottomNavItem href="/cart" icon="🛒" label="Cart" badge={cartCount > 0 ? String(cartCount) : undefined} />
           <BottomNavItem href="/profile" icon="👤" label="Profile" active />
         </nav>
 
@@ -401,8 +455,8 @@ export default function ProfilePage() {
                 {orders.length === 0 ? (
                   <div style={styles.modalEmpty}>
                     <div style={{ fontSize: 42 }}>🛍️</div>
-                    <h3 style={styles.modalEmptyTitle}>Koi order nahi mila</h3>
-                    <p style={styles.modalText}>Jab aap order karenge, yahan dikhega.</p>
+                    <h3 style={styles.modalEmptyTitle}>{ordersError ? "Orders load nahi hue" : "Koi order nahi mila"}</h3>
+                    <p style={styles.modalText}>{ordersError || "Jab aap order karenge, yahan dikhega."}</p>
                     <Link href="/" style={styles.primaryLink}>Start Shopping</Link>
                   </div>
                 ) : (
@@ -455,7 +509,7 @@ export default function ProfilePage() {
             {activeModal === "support" && (
               <div style={{ display: "grid", gap: 10 }}>
                 <p style={{ ...styles.modalText, textAlign: "center" }}>Hum 24/7 available hain</p>
-                <button onClick={callSupport} style={styles.greenBtn}>📞 Call: 9873513566</button>
+                <button onClick={callSupport} style={styles.greenBtn}>📞 Call: {appConfig.supportPhone}</button>
                 <button onClick={whatsappSupport} style={styles.whatsappBtn}>💬 WhatsApp Chat</button>
               </div>
             )}
