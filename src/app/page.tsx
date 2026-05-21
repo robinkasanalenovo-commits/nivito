@@ -6,7 +6,7 @@ import { useCart } from "@/context/CartContext";
 import {
   MapPin, ChevronDown, Bell, Search, Mic, Plus, Minus, X,
   Home as HomeIcon, Grid3x3, ShoppingCart, User, ArrowRight,
-  Clock, Sparkles, LogOut, Phone, Check,
+  Clock, Sparkles, LogOut, Phone, Check, Wrench, Smartphone, Droplets,
 } from "lucide-react";
 import { theme } from "@/lib/theme";
 
@@ -17,6 +17,16 @@ type Product = { id: number; name: string; image: string; category: string; acti
 type NotifSettings = { title: string; message: string; active: boolean; showPopup: boolean; updatedAt: number };
 type LoginUser = { id: number; full_name: string; mobile_number: string };
 type CartItem = { id: number; name: string; price: number; quantity: number; image?: string };
+type FrontTile = {
+  id: string;
+  name: string;
+  image?: string;
+  icon?: "service" | "repair" | "water" | "clean";
+  href: string;
+  accent: string;
+  text: string;
+  tag: string;
+};
 type ProductCardProps = {
   product: Product;
   selectedVariants: Record<number, Variant>;
@@ -30,6 +40,82 @@ type ProductCardProps = {
 };
 
 const defaultNotif: NotifSettings = { title: "", message: "", active: false, showPopup: true, updatedAt: 0 };
+const serviceTiles: FrontTile[] = [
+  {
+    id: "service-ac",
+    name: "Home Services",
+    href: "/services?service=ac-service",
+    icon: "service",
+    accent: "#059669",
+    text: "#047857",
+    tag: "Service",
+  },
+  {
+    id: "service-mobile",
+    name: "Mobile Repair",
+    href: "/services?service=mobile-repair",
+    icon: "repair",
+    accent: "#7c3aed",
+    text: "#5b21b6",
+    tag: "Repair",
+  },
+  {
+    id: "service-ro",
+    name: "RO Water",
+    href: "/services?service=ro-water",
+    icon: "water",
+    accent: "#2563eb",
+    text: "#1d4ed8",
+    tag: "Water",
+  },
+  {
+    id: "service-cleaning",
+    name: "Home Cleaning",
+    href: "/services?service=home-cleaning",
+    icon: "clean",
+    accent: "#f97316",
+    text: "#c2410c",
+    tag: "Clean",
+  },
+];
+const defaultCategoryTiles: FrontTile[] = [
+  {
+    id: "default-vegetables",
+    name: "Vegetables",
+    href: "/category/vegetables",
+    image: "https://i.pinimg.com/474x/fd/9a/79/fd9a7920bf1698a31d362c336e7e32a9.jpg",
+    accent: "#059669",
+    text: "#047857",
+    tag: "Fresh",
+  },
+  {
+    id: "default-fruits",
+    name: "Fruits",
+    href: "/category/fruits",
+    image: "https://png.pngtree.com/png-clipart/20241109/original/pngtree-beautiful-various-fruits-item-and-healthy-clipart-png-image_16788969.png",
+    accent: "#f97316",
+    text: "#ea580c",
+    tag: "Fresh",
+  },
+  {
+    id: "default-dairy",
+    name: "Dairy products",
+    href: "/category/dairy-products",
+    image: "https://png.pngtree.com/png-clipart/20240506/original/pngtree-dairy-products-store-composition-png-image_15017068.png",
+    accent: "#2563eb",
+    text: "#1d4ed8",
+    tag: "Daily",
+  },
+  {
+    id: "default-grocery",
+    name: "Grocery",
+    href: "/category/grocery",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdSTybltNYGkG3inpWZHQhasyWbZJ4LaylfA&s",
+    accent: "#f59e0b",
+    text: "#d97706",
+    tag: "Grocery",
+  },
+];
 
 function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -39,6 +125,27 @@ function getCategoryLink(c: Category) {
   return `/category/${slugify(c.name) || `category-${c.id}`}`;
 }
 function getMrp(p: number) { return Math.ceil(Number(p || 0) * 1.35); }
+function getCategoryAccent(name: string, index: number) {
+  const key = slugify(name);
+  if (key.includes("vegetable")) return { accent: "#059669", text: "#047857", tag: "Fresh" };
+  if (key.includes("fruit")) return { accent: "#f97316", text: "#ea580c", tag: "Fresh" };
+  if (key.includes("dairy") || key.includes("milk")) return { accent: "#2563eb", text: "#1d4ed8", tag: "Daily" };
+  if (key.includes("grocery")) return { accent: "#f59e0b", text: "#d97706", tag: "Grocery" };
+  const palette = [
+    { accent: "#059669", text: "#047857", tag: "Shop" },
+    { accent: "#dc2626", text: "#b91c1c", tag: "Shop" },
+    { accent: "#2563eb", text: "#1d4ed8", tag: "Shop" },
+    { accent: "#7c3aed", text: "#6d28d9", tag: "Shop" },
+  ];
+  return palette[index % palette.length];
+}
+function ServiceTileIcon({ icon, color }: { icon?: FrontTile["icon"]; color: string }) {
+  const iconStyle = { color, width: 44, height: 44, strokeWidth: 2.4 };
+  if (icon === "repair") return <Smartphone style={iconStyle} />;
+  if (icon === "water") return <Droplets style={iconStyle} />;
+  if (icon === "clean") return <Sparkles style={iconStyle} />;
+  return <Wrench style={iconStyle} />;
+}
 
 // ═══════════════ MAIN PAGE ═══════════════
 export default function HomePage() {
@@ -106,10 +213,30 @@ export default function HomePage() {
   const cartCount = useMemo(() => cart.reduce((t, i) => t + i.quantity, 0), [cart]);
   const getCartId = (pid: number, vid: number) => pid * 1000000 + (vid % 1000000);
 
-  const categoryPills = useMemo(() => [
-    { key: "all", label: "All", emoji: "✨" },
-    ...adminCategories.map((c) => ({ key: slugify(c.name), label: c.name, emoji: "🛍️" })),
-  ], [adminCategories]);
+  const categoryPills = useMemo(() => {
+    const adminPills = adminCategories.map((c) => ({ key: slugify(c.name), label: c.name, href: getCategoryLink(c) }));
+    const existing = new Set(adminPills.map((pill) => pill.key));
+    const fallbackPills = defaultCategoryTiles
+      .filter((tile) => !existing.has(slugify(tile.name)))
+      .map((tile) => ({ key: slugify(tile.name), label: tile.name, href: tile.href }));
+    return [{ key: "all", label: "All", href: "/" }, ...adminPills, ...fallbackPills];
+  }, [adminCategories]);
+
+  const frontTiles = useMemo<FrontTile[]>(() => {
+    const adminTiles = adminCategories.map((cat, idx) => {
+      const colors = getCategoryAccent(cat.name, idx);
+      return {
+        id: `cat-${cat.id}`,
+        name: cat.name,
+        image: cat.image,
+        href: getCategoryLink(cat),
+        ...colors,
+      };
+    });
+    const existing = new Set(adminTiles.map((tile) => slugify(tile.name)));
+    const missingDefaults = defaultCategoryTiles.filter((tile) => !existing.has(slugify(tile.name)));
+    return [...adminTiles, ...missingDefaults, ...serviceTiles];
+  }, [adminCategories]);
 
   const filteredProducts = useMemo(() => {
     let r = adminProducts;
@@ -279,14 +406,103 @@ export default function HomePage() {
                 whiteSpace: "nowrap", cursor: "pointer",
                 boxShadow: a ? "0 4px 10px rgba(16,185,129,0.3)" : "0 1px 3px rgba(0,0,0,0.05)",
               }}>
-                <span>{p.emoji}</span> {p.label}
+                {p.label}
               </button>
             );
           })}
+          <Link href="/services" style={{
+            flexShrink: 0, display: "flex", alignItems: "center",
+            padding: "7px 12px", borderRadius: 999,
+            background: "#fff", color: "#6d28d9",
+            border: "1.5px solid #ede9fe",
+            fontSize: 11.5, fontWeight: 800,
+            whiteSpace: "nowrap", cursor: "pointer",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            textDecoration: "none",
+          }}>
+            Services
+          </Link>
         </HScroll>
 
+        {frontTiles.length > 0 && (
+          <div>
+            <SectionHeader title="Shop by Category" link="/category/all" />
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              columnGap: 10,
+              rowGap: 13,
+            }}>
+              {frontTiles.map((tile) => (
+                <Link key={tile.id} href={tile.href} style={{
+                  textDecoration: "none",
+                  color: tile.text,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  minWidth: 0,
+                }}>
+                  <div style={{
+                    width: "100%",
+                    aspectRatio: "1 / 1",
+                    background: `linear-gradient(135deg, ${tile.accent}14, #fff)`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    borderRadius: 14,
+                    border: `2px solid ${tile.accent}38`,
+                    boxShadow: `0 4px 12px ${tile.accent}18`,
+                  }}>
+                    {tile.image ? (
+                      <img
+                        src={tile.image}
+                        alt={tile.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : tile.icon ? (
+                      <div style={{
+                        width: "62%",
+                        height: "62%",
+                        borderRadius: 16,
+                        background: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: `0 8px 16px ${tile.accent}22`,
+                        border: `1px solid ${tile.accent}22`,
+                      }}>
+                        <ServiceTileIcon icon={tile.icon} color={tile.accent} />
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 28, fontWeight: 900, color: tile.accent }}>{tile.name.slice(0, 1)}</span>
+                    )}
+                  </div>
+                  <div style={{
+                    padding: "7px 2px 0",
+                    textAlign: "center",
+                    fontSize: 12.5,
+                    fontWeight: 900,
+                    lineHeight: 1.2,
+                    color: tile.text,
+                    minHeight: 30,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "center",
+                    overflowWrap: "anywhere",
+                    width: "100%",
+                  }}>{tile.name}</div>
+                    <span style={{
+                      display: "none",
+                    }}>{tile.tag}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
       {/* ════════ SHOP GROCERIES — 3 col BIG color tiles ════════ */}
-{adminCategories.length > 0 && (
+{false && adminCategories.length > 0 && (
   <div style={{
     background: "linear-gradient(135deg, #ecfdf5 0%, #fffbeb 100%)",
     borderRadius: 18, padding: "14px 12px",
@@ -422,6 +638,7 @@ export default function HomePage() {
 
 
 {/* ════════ HOME SERVICES — 2 col BIG premium cards ════════ */}
+{false && (
 <div style={{
   background: "linear-gradient(135deg, #eff6ff 0%, #fef3c7 100%)",
   borderRadius: 18, padding: "14px 12px",
@@ -532,6 +749,7 @@ export default function HomePage() {
     View all services <ArrowRight size={13} />
   </Link>
 </div>
+)}
 
             {sections.map(({ category, products }) => (
               <div key={category.id}>
